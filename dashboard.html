@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>User Dashboard</title>
+    <style>
+        body {
+            font-family: 'Inter', system-ui, -apple-system, sans-serif;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            background-color: #f8fafc;
+        }
+        .dashboard-container {
+            display: flex;
+            width: 100%;
+            flex-direction: row;
+        }
+        /* Keeping original sidebar styles with responsive updates */
+        .sidebar {
+            width: 250px;
+            background-color: #333;
+            color: white;
+            padding: 20px;
+            height: 100vh;
+            position: sticky;
+            top: 0;
+            transition: transform 0.3s ease;
+        }
+        .sidebar h2 {
+            text-align: center;
+        }
+        .sidebar ul {
+            list-style: none;
+            padding: 0;
+        }
+        .sidebar ul li {
+            padding: 15px 0;
+        }
+        .sidebar ul li a {
+            color: white;
+            text-decoration: none;
+            display: block;
+            padding: 10px;
+            transition: 0.3s;
+        }
+        .sidebar ul li a:hover {
+            background-color: #575757;
+        }
+        /* Menu toggle for mobile */
+        .menu-toggle {
+            display: none;
+            position: fixed;
+            top: 1rem;
+            left: 1rem;
+            z-index: 1000;
+            background-color: #333;
+            color: white;
+            border: none;
+            padding: 0.5rem;
+            border-radius: 0.5rem;
+            cursor: pointer;
+        }
+        /* Main content styles with responsive updates */
+        .content {
+            flex-grow: 1;
+            padding: 2rem;
+            max-width: 1200px;
+            margin: 0 auto;
+            width: 100%;
+        }
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background-color: transparent;
+            margin-bottom: 2rem;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+        .logout {
+            background-color: #ef4444;
+            color: white;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            cursor: pointer;
+            border-radius: 0.5rem;
+            font-weight: 500;
+            transition: background-color 0.2s;
+        }
+        .logout:hover {
+            background-color: #dc2626;
+        }
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+        .card {
+            background-color: white;
+            padding: 1.5rem;
+            border-radius: 1rem;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+        .wallet-balance {
+            background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+            color: white;
+        }
+        .wallet-balance h3 {
+            margin: 0;
+            font-size: 1.25rem;
+            opacity: 0.9;
+        }
+        .balance-amount {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin: 1rem 0;
+        }
+        .conversion form {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+        .conversion input {
+            padding: 0.75rem;
+            border: 1px solid #e2e8f0;
+            border-radius: 0.5rem;
+            font-size: 1rem;
+            width: 100%;
+            box-sizing: border-box;
+        }
+        .conversion button {
+            background-color: #2563eb;
+            color: white;
+            border: none;
+            padding: 0.75rem;
+            border-radius: 0.5rem;
+            cursor: pointer;
+            font-weight: 500;
+            transition: background-color 0.2s;
+        }
+        .conversion button:hover {
+            background-color: #1d4ed8;
+        }
+        .transaction-history {
+            grid-column: 1 / -1;
+            overflow-x: auto;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 1rem;
+            min-width: 600px;
+        }
+        th, td {
+            padding: 1rem;
+            text-align: left;
+            border-bottom: 1px solid #e2e8f0;
+        }
+        th {
+            background-color: #f8fafc;
+            color: #1e293b;
+            font-weight: 600;
+        }
+        .status {
+            padding: 0.25rem 0.75rem;
+            border-radius: 9999px;
+            font-size: 0.875rem;
+            font-weight: 500;
+            background-color: #bbf7d0;
+            color: #166534;
+            display: inline-block;
+        }
+
+        /* Responsive styles */
+        @media (max-width: 1024px) {
+            .dashboard-grid {
+                grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            }
+        }
+
+        @media (max-width: 768px) {
+            .menu-toggle {
+                display: block;
+            }
+            .dashboard-container {
+                position: relative;
+            }
+            .sidebar {
+                position: fixed;
+                transform: translateX(-100%);
+                z-index: 999;
+            }
+            .sidebar.active {
+                transform: translateX(0);
+            }
+            .content {
+                padding: 1rem;
+                margin-top: 3rem;
+            }
+            header {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+            .card {
+                padding: 1rem;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .dashboard-grid {
+                grid-template-columns: 1fr;
+            }
+            .balance-amount {
+                font-size: 2rem;
+            }
+            .content {
+                padding: 0.75rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <button class="menu-toggle" onclick="document.querySelector('.sidebar').classList.toggle('active')">☰</button>
+    <div class="dashboard-container">
+        <aside class="sidebar">
+            <h2>Dashboard</h2>
+            <ul>
+                <li><a href="#">Home</a></li>
+                <li><a href="#">Buy XCoin</a></li>
+                <li><a href="#">Convert XCoin</a></li>
+                <li><a href="#">Transaction History</a></li>
+                <li><a href="#">Settings</a></li>
+            </ul>
+        </aside>
+        <main class="content">
+            <header>
+                <h1>Welcome, User</h1>
+                <button class="logout">Logout</button>
+            </header>
+            <div class="dashboard-grid">
+                <div class="card wallet-balance">
+                    <h3>Wallet Balance</h3>
+                    <div class="balance-amount">1000 XCoin</div>
+                </div>
+                <div class="card conversion">
+                    <h3>Convert XCoin to RMB</h3>
+                    <form>
+                        <label for="amount">Amount in XCoin</label>
+                        <input type="number" id="amount" name="amount" placeholder="Enter amount" required>
+                        <p>Equivalent in RMB: <strong id="rmb-value">0</strong></p>
+                        <button type="submit">Convert Now</button>
+                    </form>
+                </div>
+                <div class="card transaction-history">
+                    <h3>Transaction History</h3>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th>Amount (XCoin)</th>
+                                <th>Amount (RMB)</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>2025-02-10</td>
+                                <td>500</td>
+                                <td>3500</td>
+                                <td><span class="status">Completed</span></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </main>
+    </div>
+</body>
+</html>
