@@ -277,26 +277,26 @@ function ConvertXcoinPage() {
                       className="block text-sm font-medium text-gray-700 mb-2"
                     >
                       Upload your QR Code
-                      </label>
-                    <div className={`border-2 ${
-                        isImageUploaded ? "max-w-sm max-h-40 overflow-y-auto border-green-500" : "border-dashed border-gray-300"
+                    </label>
+                    <div
+                      className={`border-2 ${
+                        isImageUploaded ? "max-w-sm max-h-40 overflow-y-auto border-blue-500" : "border-dashed border-gray-300"
                       } rounded-lg p-6 text-center`}
+                      style={{ boxShadow: 'inset 0 0 10px rgb(4, 104, 253)' }}
                     >
                       {imageUrl ? (
                         <img src={imageUrl} alt="QR Code" className="mx-auto" />
-                      ): (
-                        <div>
-                        </div>
+                      ) : (
+                        <div></div>
                       )}
                       <input
-                      type="file"
-                      accept="image/*"
-                      onChange={handleFileChange}
-                      className="mt-4"/>
+                        type="file"
+                        accept="image/*"
+                        onChange={handleFileChange}
+                        className="mt-4"
+                      />
                       <p className="text-left mt-4 text-sm text-gray-600">
-                        Upload your Alipay or WeChat {/*{" "}
-                        {toCurrency === "rmb" ? "Alipay" : "WeChat Pay"}{" "}*/}
-                        receiving QR Code
+                        Upload your Alipay or WeChat receiving QR Code
                       </p>
                     </div>
                   </div>
