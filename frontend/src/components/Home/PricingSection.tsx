@@ -6,8 +6,8 @@ const PricingSection = () => {
     {
       name: "Standard",
       description: "Perfect for occasional transfers",
-      fee: "2.5%",
-      limit: "Up to $5,000/day",
+      fee: "8.5%",
+      limit: "Up to XAF100,000/day",
       features: [
         "Real-time exchange rates",
         "Mobile money payment option",
@@ -19,8 +19,8 @@ const PricingSection = () => {
     {
       name: "Premium",
       description: "Ideal for regular transfers",
-      fee: "1.8%",
-      limit: "Up to $20,000/day",
+      fee: "7.5%",
+      limit: "Up to XAF250,000/day",
       featured: true,
       features: [
         "All Standard features",
@@ -33,7 +33,7 @@ const PricingSection = () => {
     {
       name: "Business",
       description: "For high-volume transfers",
-      fee: "1.2%",
+      fee: "5.2%",
       limit: "Custom limits",
       features: [
         "All Premium features",

@@ -1,6 +1,9 @@
 import { useState, useEffect } from "react";
 import Sidebar from "../components/Sidebar";
 
+// I added this to handle drag n drop of QR code image but later didn't use it.
+// import { useDropzone } from "react";
+
 type Conversion = {
   id: number;
   date: string;
@@ -56,6 +59,9 @@ function ConvertXcoinPage() {
       status: "Completed",
     },
   ]);
+
+  const [imageUrl, setImageUrl] = useState<string | null>(null);
+  const [isImageUploaded, setIsImageUploaded] = useState(false);
 
   // Calculate conversion whenever input or destination changes
   useEffect(() => {
@@ -130,6 +136,18 @@ function ConvertXcoinPage() {
     }
   };
 
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        setImageUrl(reader.result as string);
+        setIsImageUploaded(true);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
   return (
     <div className="flex h-screen bg-gray-50">
       <Sidebar />
@@ -138,7 +156,7 @@ function ConvertXcoinPage() {
 
         {/* Conversion Form */}
         <div className="flex flex-row">
-          <div className="max-w-lg mx-auto">
+          <div className="max-w-2xl mx-auto">
             <header className="mb-8">
               <h1 className="text-3xl font-bold text-gray-800 text-center">
                 Convert XCoin
@@ -169,7 +187,7 @@ function ConvertXcoinPage() {
             ) : (
               <form
                 onSubmit={handleSubmit}
-                className="bg-white p-8 rounded-lg shadow-lg space-y-6"
+                className="bg-white p-8 rounded-lg shadow-lg space-y-6 max-w-2xl mx-auto"
               >
                 {/* Fixed "From" field */}
                 <div>
@@ -209,7 +227,7 @@ function ConvertXcoinPage() {
                     >
                       <option value="rmb">RMB</option>
                       <option value="fcfa">FCFA</option>
-                      <option value="usd">USD</option>
+                      <option value="usd" disabled>USD</option>
                     </select>
                     <div className="relative flex-1 ml-4">
                       <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500">
@@ -226,6 +244,64 @@ function ConvertXcoinPage() {
                     </div>
                   </div>
                 </div>
+
+                {/* Show if Destination currency is FCFA */}
+                {toCurrency === "fcfa" && (
+                  <div>
+                    <label
+                      htmlFor="phoneNumber"
+                      className="block text-sm font-medium text-gray-700 mb-2"
+                    >
+                      Mobile Money Number
+                    </label>
+                    <input
+                      type="tel"
+                      id="phoneNumber"
+                      name="phoneNumber"
+                      placeholder="Enter your mobile number"
+                      pattern="\d{9,}"
+                      title="Number should be at least 9 digits"
+                      minLength={9}
+                      maxLength={9}
+                      className="w-full px-4 py-3 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                      required
+                    />
+                  </div>
+                )}
+
+                {/* Show if Destination currency is RMB */}
+                {toCurrency === "rmb" && (
+                  <div>
+                    <label
+                      htmlFor="qrCode"
+                      className="block text-sm font-medium text-gray-700 mb-2"
+                    >
+                      Upload your QR Code
+                      </label>
+                    <div className={`border-2 ${
+                        isImageUploaded ? "max-w-sm max-h-40 overflow-y-auto border-green-500" : "border-dashed border-gray-300"
+                      } rounded-lg p-6 text-center`}
+                    >
+                      {imageUrl ? (
+                        <img src={imageUrl} alt="QR Code" className="mx-auto" />
+                      ): (
+                        <div>
+                        </div>
+                      )}
+                      <input
+                      type="file"
+                      accept="image/*"
+                      onChange={handleFileChange}
+                      className="mt-4"/>
+                      <p className="text-left mt-4 text-sm text-gray-600">
+                        Upload your Alipay or WeChat {/*{" "}
+                        {toCurrency === "rmb" ? "Alipay" : "WeChat Pay"}{" "}*/}
+                        receiving QR Code
+                      </p>
+                    </div>
+                  </div>
+                )}
+
                 {/* Rate Information */}
                 <div className="bg-blue-50 p-4 rounded-lg text-sm text-blue-800">
                   <p>
@@ -253,47 +329,65 @@ function ConvertXcoinPage() {
               </form>
             )}
           </div>
-          {/* Recent Conversions */}
-          <div className="max-w-lg mx-auto mt-12">
-            <h2 className="text-2xl font-bold text-gray-800 mb-4 text-center">
-              Recent Conversions
-            </h2>
-            <div className="bg-white p-4 rounded-lg shadow-lg overflow-x-auto">
-              <table className="w-full border-collapse">
-                <thead>
-                  <tr className="bg-gray-50">
-                    <th className="p-3 text-left text-gray-600 text-sm">
-                      Date
-                    </th>
-                    <th className="p-3 text-left text-gray-600 text-sm">
-                      From
-                    </th>
-                    <th className="p-3 text-left text-gray-600 text-sm">To</th>
-                    <th className="p-3 text-left text-gray-600 text-sm">
-                      Status
-                    </th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {recentConversions.map((conversion) => (
-                    <tr key={conversion.id} className="border-b">
-                      <td className="p-3 text-sm">{conversion.date}</td>
-                      <td className="p-3 text-sm">
-                        {conversion.fromAmount.toFixed(2)}{" "}
-                        {conversion.fromCurrency}
-                      </td>
-                      <td className="p-3 text-sm">
-                        {conversion.toAmount.toFixed(2)} {conversion.toCurrency}
-                      </td>
-                      <td className="p-3">
-                        <span className="bg-green-100 text-green-700 px-2 py-1 rounded-full text-xs font-medium">
-                          {conversion.status}
-                        </span>
-                      </td>
+
+          {/* Info Panel*/}
+          <div className="space-y-6 ml-6">
+            {/* Recent Conversions */}
+            <div className="max-w-lg mx-auto mt-12">
+              <h2 className="text-2xl font-bold text-gray-800 mb-4 text-center">
+                Recent Conversions
+              </h2>
+              <div className="bg-white p-4 rounded-lg shadow-lg overflow-x-auto">
+                <table className="w-full border-collapse">
+                  <thead>
+                    <tr className="bg-gray-50">
+                      <th className="p-3 text-left text-gray-600 text-sm">
+                        Date
+                      </th>
+                      <th className="p-3 text-left text-gray-600 text-sm">
+                        From
+                      </th>
+                      <th className="p-3 text-left text-gray-600 text-sm">To</th>
+                      <th className="p-3 text-left text-gray-600 text-sm">
+                        Status
+                      </th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
+                  </thead>
+                  <tbody>
+                    {recentConversions.map((conversion) => (
+                      <tr key={conversion.id} className="border-b">
+                        <td className="p-3 text-sm">{conversion.date}</td>
+                        <td className="p-3 text-sm">
+                          {conversion.fromAmount.toFixed(2)}{" "}
+                          {conversion.fromCurrency}
+                        </td>
+                        <td className="p-3 text-sm">
+                          {conversion.toAmount.toFixed(2)} {conversion.toCurrency}
+                        </td>
+                        <td className="p-3">
+                          <span className="bg-green-100 text-green-700 px-2 py-1 rounded-full text-xs font-medium">
+                            {conversion.status}
+                          </span>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            {/* Help Box */}
+            <div>
+              <div className="bg-gradient-to-r from-blue-500 to-blue-600 p-6 rounded-xl shadow-lg text-white">
+                <h3 className="text-lg font-medium mb-3"> Need Help?</h3>
+                <p className="mb-4">
+                  Our support team is available 24/7 to assist you with your XCoin
+                  purchases.
+                </p>
+                <a href="/#ContactSection" className="inline-block bg-white text-blue-600 px-4 py-2 rounded-lg font-medium hover:bg-gray-100 transition-colors">
+                  Contact Support
+                </a>
+              </div>
             </div>
           </div>
         </div>

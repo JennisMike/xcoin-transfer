@@ -96,8 +96,9 @@ function UserDashboard() {
                 id="paymentMethod"
                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-sm"
               >
-                <option value="momo">MTN Momo</option>
-                <option value="bankTransfer">Bank Transfer</option>
+                <option value="momo">MTN MoMo</option>
+                <option value="wechat">Alipay/WeChat</option>
+                <option value="bankTransfer" disabled>Bank Transfer</option>
               </select>
               <button
                 type="submit"

@@ -60,7 +60,7 @@ function BuyXcoinPage() {
         {/* Main Content */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
           {/* Buy XCoin Form */}
-          <div className="bg-white p-8 rounded-xl shadow-lg">
+          <div className="bg-white p-8 rounded-xl shadow-lg max-w-2xl">
             <h2 className="text-xl font-medium text-gray-800 mb-6">
               Purchase XCoin
             </h2>
@@ -132,7 +132,7 @@ function BuyXcoinPage() {
                   >
                     <option value="momo">MTN Mobile Money</option>
                     <option value="orange">Orange Money</option>
-                    <option value="bankTransfer">Bank Transfer</option>
+                    <option value="bankTransfer" disabled>Bank Transfer</option>
                     <option value="alipay">Alipay</option>
                     <option value="wechat">WeChat Pay</option>
                   </select>
@@ -151,7 +151,12 @@ function BuyXcoinPage() {
                       id="phoneNumber"
                       name="phoneNumber"
                       placeholder="Enter your mobile number"
+                      pattern="\d{9,9}"
+                      minLength={9}
+                      maxLength={9}
+                      title="Number should be at least 9 digits"
                       className="w-full px-4 py-3 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                      required
                     />
                   </div>
                 )}

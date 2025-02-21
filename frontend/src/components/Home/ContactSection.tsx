@@ -32,7 +32,7 @@ const ContactSection = () => {
             Get in Touch
           </h2>
           <p className="text-lg text-gray-600 max-w-2xl mx-auto">
-            Have questions about our XCoin to RMB conversion service? Our team
+            Have questions about our XAF to RMB conversion service? Our team
             is here to help 24/7.
           </p>
         </div>
@@ -61,7 +61,7 @@ const ContactSection = () => {
                   </div>
                   <div>
                     <p className="text-sm text-gray-600">Phone</p>
-                    <p className="text-gray-900">+1 (234) 567-8900</p>
+                    <p className="text-gray-900">+86 131 3063 7422</p>
                   </div>
                 </div>
                 <div className="flex items-center gap-3">
