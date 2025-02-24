@@ -16,9 +16,9 @@ type Conversion = {
 
 const rates = {
   xcoin: {
-    rmb: 7,
-    fcfa: 550,
-    usd: 0.95,
+    rmb: 5.42,
+    fcfa: 467.52,
+    usd: 0.74,
   },
 };
 
@@ -89,7 +89,7 @@ function ConvertXcoinPage() {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
-    // Simulate an API call
+    // TODO: Make API Call
     setTimeout(() => {
       setIsLoading(false);
       setShowConfirmation(true);
@@ -143,6 +143,7 @@ function ConvertXcoinPage() {
       reader.onload = (e) => {
         setImageUrl(reader.result as string);
         setIsImageUploaded(true);
+        console.log(e);
       };
       reader.readAsDataURL(file);
     }
@@ -227,7 +228,9 @@ function ConvertXcoinPage() {
                     >
                       <option value="rmb">RMB</option>
                       <option value="fcfa">FCFA</option>
-                      <option value="usd" disabled>USD</option>
+                      <option value="usd" disabled>
+                        USD
+                      </option>
                     </select>
                     <div className="relative flex-1 ml-4">
                       <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500">
@@ -280,9 +283,10 @@ function ConvertXcoinPage() {
                     </label>
                     <div
                       className={`border-2 ${
-                        isImageUploaded ? "max-w-sm max-h-40 overflow-y-auto border-blue-500" : "border-dashed border-gray-300"
-                      } rounded-lg p-6 text-center`}
-                      style={{ boxShadow: 'inset 0 0 10px rgb(4, 104, 253)' }}
+                        isImageUploaded
+                          ? "max-w-sm max-h-40 overflow-y-auto border-blue-500"
+                          : "border-dashed border-gray-300"
+                      } rounded-lg p-6 text-center shadow-inset-blue`}
                     >
                       {imageUrl ? (
                         <img src={imageUrl} alt="QR Code" className="mx-auto" />
@@ -347,7 +351,9 @@ function ConvertXcoinPage() {
                       <th className="p-3 text-left text-gray-600 text-sm">
                         From
                       </th>
-                      <th className="p-3 text-left text-gray-600 text-sm">To</th>
+                      <th className="p-3 text-left text-gray-600 text-sm">
+                        To
+                      </th>
                       <th className="p-3 text-left text-gray-600 text-sm">
                         Status
                       </th>
@@ -362,7 +368,8 @@ function ConvertXcoinPage() {
                           {conversion.fromCurrency}
                         </td>
                         <td className="p-3 text-sm">
-                          {conversion.toAmount.toFixed(2)} {conversion.toCurrency}
+                          {conversion.toAmount.toFixed(2)}{" "}
+                          {conversion.toCurrency}
                         </td>
                         <td className="p-3">
                           <span className="bg-green-100 text-green-700 px-2 py-1 rounded-full text-xs font-medium">
@@ -381,10 +388,13 @@ function ConvertXcoinPage() {
               <div className="bg-gradient-to-r from-blue-500 to-blue-600 p-6 rounded-xl shadow-lg text-white">
                 <h3 className="text-lg font-medium mb-3"> Need Help?</h3>
                 <p className="mb-4">
-                  Our support team is available 24/7 to assist you with your XCoin
-                  purchases.
+                  Our support team is available 24/7 to assist you with your
+                  XCoin purchases.
                 </p>
-                <a href="/#ContactSection" className="inline-block bg-white text-blue-600 px-4 py-2 rounded-lg font-medium hover:bg-gray-100 transition-colors">
+                <a
+                  href="/#ContactSection"
+                  className="inline-block bg-white text-blue-600 px-4 py-2 rounded-lg font-medium hover:bg-gray-100 transition-colors"
+                >
                   Contact Support
                 </a>
               </div>

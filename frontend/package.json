@@ -1,8 +1,9 @@
 {
-  "name": "frontend",
+  "name": "xcoin-transfer-frontend",
   "private": true,
   "version": "0.0.0",
   "type": "module",
+  "keywords": [],
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",

@@ -1,4 +1,29 @@
- function CalculatorSection() {
+import { SetStateAction, useState } from "react";
+import { ExhangeRateType } from "../../types";
+
+function CalculatorSection() {
+  const [amount, setAmount] = useState("");
+  const [currency, setCurrency] = useState("RMB");
+  const exchangeRates: ExhangeRateType = { RMB: 7.2, XAF: 600 };
+
+  const handleAmountChange = (e: {
+    target: { value: SetStateAction<string> };
+  }) => {
+    setAmount(e.target.value);
+  };
+
+  const handleCurrencyChange = (e: {
+    target: { value: SetStateAction<string> };
+  }) => {
+    setCurrency(e.target.value);
+  };
+
+  const calculateReceivedAmount = () => {
+    return amount
+      ? (parseFloat(amount) * exchangeRates[currency]).toFixed(2)
+      : "0.00";
+  };
+
   return (
     <section className="py-16 bg-white">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -22,28 +47,48 @@
                   <div className="mt-1 relative rounded-md shadow-sm">
                     <input
                       type="number"
+                      value={amount}
+                      onChange={handleAmountChange}
                       className="focus:ring-indigo-500 focus:border-indigo-500 block w-full pl-4 pr-12 sm:text-sm border-gray-300 rounded-md"
                       placeholder="0.00"
                     />
                     <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
-                      <span className="text-gray-500 sm:text-sm">USD</span>
+                      <span className="text-gray-500 sm:text-sm">Xcoin</span>
                     </div>
                   </div>
                 </div>
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700">
-                    They Receive
+                    Destination Currency
+                  </label>
+                  <select
+                    title="Currency"
+                    value={currency}
+                    onChange={handleCurrencyChange}
+                    className="mt-1 block w-full py-2 px-3 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                  >
+                    <option value="RMB">RMB</option>
+                    <option value="XAF">XAF</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">
+                    You Receive
                   </label>
                   <div className="mt-1 relative rounded-md shadow-sm">
                     <input
-                      type="number"
+                      type="text"
+                      value={calculateReceivedAmount()}
+                      readOnly
                       className="focus:ring-indigo-500 focus:border-indigo-500 block w-full pl-4 pr-12 sm:text-sm border-gray-300 rounded-md bg-gray-100"
                       placeholder="0.00"
-                      readOnly
                     />
                     <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
-                      <span className="text-gray-500 sm:text-sm">RMB</span>
+                      <span className="text-gray-500 sm:text-sm">
+                        {currency}
+                      </span>
                     </div>
                   </div>
                 </div>

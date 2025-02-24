@@ -97,4 +97,9 @@
   body {
     @apply bg-background text-foreground;
   }
+
+  .shadow-inset-blue {
+    @apply inset-1 shadow-lg; /* You can adjust the shadow size */
+    box-shadow: inset 0 0 10px rgb(4, 104, 253);
+  }
 }

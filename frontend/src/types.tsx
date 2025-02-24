@@ -49,3 +49,9 @@ export interface UserProfile {
     marketingEmails?: boolean;
   };
 }
+
+export interface ExhangeRateType {
+  RMB: number;
+  XAF: number;
+  [key: string]: number;
+}
