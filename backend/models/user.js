@@ -18,6 +18,10 @@ const User = sequelize.define(
       type: DataTypes.DATEONLY,
       allowNull: false,
     },
+    phone: {
+      type: DataTypes.STRING,
+      allowNull: true,
+    },
     gender: {
       type: DataTypes.ENUM("male", "female"),
       allowNull: false,
@@ -28,7 +32,7 @@ const User = sequelize.define(
     },
     institution: {
       type: DataTypes.STRING,
-      allowNull: true, // Only required for students
+      allowNull: true,
     },
     country: {
       type: DataTypes.STRING,
@@ -66,15 +70,36 @@ const User = sequelize.define(
     },
     preferredCurrency: {
       type: DataTypes.STRING,
-      defaultValue: "USD",
+      defaultValue: "FCFA",
     },
     language: {
       type: DataTypes.STRING,
       defaultValue: "en",
     },
     notifications: {
-      type: DataTypes.JSONB, // Store email, sms, push as JSON
+      type: DataTypes.JSONB,
       defaultValue: {},
+      allowNull: true,
+    },
+    sendEmailNotifcations: {
+      type: DataTypes.BOOLEAN,
+      defaultValue: false,
+      allowNull: true,
+    },
+    sendSMSNotifications: {
+      type: DataTypes.BOOLEAN,
+      defaultValue: false,
+      allowNull: true,
+    },
+    sendPushNotifications: {
+      type: DataTypes.BOOLEAN,
+      defaultValue: false,
+      allowNull: true,
+    },
+    sendMarketingEmails: {
+      type: DataTypes.BOOLEAN,
+      defaultValue: false,
+      allowNull: true,
     },
   },
   {

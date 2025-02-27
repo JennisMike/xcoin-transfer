@@ -57,7 +57,6 @@ const Transaction = sequelize.define(
   }
 );
 
-// Associate transactions with users
 Transaction.belongsTo(User, { foreignKey: "userId", onDelete: "CASCADE" });
 User.hasMany(Transaction, { foreignKey: "userId" });
 

@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import Sidebar from "../components/Sidebar";
-import { Transaction } from "../types";
-import { mockTransactions } from "../data";
+import { Transaction } from "../utils/types";
+import { mockTransactions } from "../utils/data";
 import { ArrowLeft } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 

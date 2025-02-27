@@ -55,3 +55,32 @@ export interface ExhangeRateType {
   XAF: number;
   [key: string]: number;
 }
+
+export interface ContactFormData {
+  name: string;
+  email: string;
+  subject: string;
+  message: string;
+}
+
+export interface ProtectedWrapperProps {
+  children: React.ReactNode;
+}
+
+export interface Subscription {
+  type: string;
+  trialEnd: Date | null;
+}
+
+export interface WalletProps {
+  balance: number;
+  subscriptionType: "standard" | "premium" | "business";
+  isExpired?: boolean;
+}
+
+export interface Card {
+  balance: number;
+  subscriptionType: "standard" | "premium" | "business";
+  isEpired?: boolean;
+  rate: number;
+}

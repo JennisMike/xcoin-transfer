@@ -4,8 +4,9 @@ import { yupResolver } from "@hookform/resolvers/yup";
 import * as yup from "yup";
 import { Eye, EyeOff, Lock, Mail } from "lucide-react";
 import { Alert, AlertDescription } from "../components/ui/alert";
-import { Link } from "react-router-dom";
-import { LoginFormInputs } from "../types";
+import { Link, useNavigate } from "react-router-dom";
+import { LoginFormInputs } from "../utils/types";
+import axios, { AxiosError } from "axios";
 
 // Validation schema using Yup
 const schema = yup.object().shape({
@@ -31,15 +32,32 @@ const LoginPage = () => {
     defaultValues: { rememberMe: false }, // Ensures `rememberMe` is always boolean
   });
 
-  const [error, setError] = useState("");
+  const [error, setError] = useState<string | null>(null);
+  const navigate = useNavigate();
+  const url = `${import.meta.env.VITE_ROOT_URL}/auth/login`;
 
   const onSubmit = async (data: LoginFormInputs) => {
     try {
-      console.log("Login attempt:", data);
-      // Implement API call for authentication here
-    } catch (err) {
-      setError("Failed to log in. Please try again.");
-      console.log(err);
+      const response = await axios.post<{ message: string }>(url, data, {
+        withCredentials: true,
+      });
+      console.log("Logged in successfully:", response.data);
+      setError(null);
+      navigate("/dashboard");
+    } catch (error) {
+      const axiosError = error as AxiosError;
+      if (axiosError.response) {
+        console.error("Login failed:", axiosError.response.data);
+        // Ensure the error message is a string before setting it
+        const errorMessage =
+          typeof axiosError.response.data === "string"
+            ? axiosError.response.data
+            : "An unknown error occurred.";
+        setError(errorMessage);
+      } else {
+        console.error("An error occurred:", axiosError.message);
+        setError(axiosError.message);
+      }
     }
   };
 

@@ -154,3 +154,21 @@ export const mockProfile: UserProfile = {
     marketingEmails: false,
   },
 };
+
+export const subscriptionStyles = {
+  standard: {
+    bg: "from-[#3B82F6] to-[#1D4ED8]", // Blue gradient
+    badgeBg: "bg-blue-500",
+    badgeText: "Standard",
+  },
+  premium: {
+    bg: "from-[#FACC15] to-[#EAB308]", // Gold gradient
+    badgeBg: "bg-yellow-500",
+    badgeText: "Premium",
+  },
+  business: {
+    bg: "from-[#10B981] to-[#047857]", // Green gradient
+    badgeBg: "bg-green-500",
+    badgeText: "Business",
+  },
+};

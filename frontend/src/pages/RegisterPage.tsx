@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { yupResolver } from "@hookform/resolvers/yup";
 import * as yup from "yup";
+import axios from "axios";
 import {
   Eye,
   EyeOff,
@@ -13,7 +14,8 @@ import {
   Globe,
 } from "lucide-react";
 import { motion } from "framer-motion";
-import { RegisterFormInputs } from "../types";
+import { RegisterFormInputs } from "../utils/types";
+import { useNavigate } from "react-router-dom";
 
 // Validation schema using Yup
 const schema = yup.object().shape({
@@ -53,18 +55,51 @@ const RegisterPage = () => {
     register,
     handleSubmit,
     watch,
+    setError,
     formState: { errors },
   } = useForm<RegisterFormInputs>({
     resolver: yupResolver(schema),
   });
 
-  // Use watch() to dynamically track the occupation value
   const occupation = watch("occupation");
+  const url = `${import.meta.env.VITE_ROOT_URL}/auth/register`;
+  const navigate = useNavigate();
 
   const onSubmit = async (data: RegisterFormInputs) => {
-    console.log("Registration Data:", data);
-    // Handle API submission here
+    try {
+      const response = await axios.post(url, data);
+      // await createSubscription();
+      console.log("Registration successful:", response.data);
+      navigate("/dashboard");
+    } catch (error) {
+      if (
+        axios.isAxiosError(error) &&
+        error.response &&
+        error.response.data &&
+        error.response.data.errors
+      ) {
+        const serverErrors = error.response.data.errors;
+        Object.keys(serverErrors).forEach((field) => {
+          setError(field as keyof RegisterFormInputs, {
+            type: "server",
+            message: serverErrors[field],
+          });
+        });
+      } else {
+        console.error("An unexpected error occurred:", error);
+      }
+    }
   };
+
+  // const createSubscription = async () => {
+  //   try {
+  //     const url = `${import.meta.env.VITE_ROOT_URL}/subscriptions/create`;
+  //     const response = await axios.post(url, {}, { withCredentials: true });
+  //     console.log("Subscription created:", response);
+  //   } catch (error) {
+  //     console.log(error);
+  //   }
+  // };
 
   return (
     <div className="min-h-screen flex flex-col justify-center items-center bg-gradient-to-br from-blue-50 via-white to-purple-50 p-4">
@@ -220,6 +255,7 @@ const RegisterPage = () => {
               )}
             </motion.div>
           )}
+
           {/* Country of Origin */}
           <div className="space-y-2">
             <label className="block text-sm font-medium text-gray-700">
@@ -236,10 +272,6 @@ const RegisterPage = () => {
                 <option value="">Select your country</option>
                 <option value="Cameroon">Cameroon</option>
                 <option value="China">China</option>
-                {/* <option value="UK">UK</option>
-                <option value="Canada">Canada</option>
-                <option value="India">India</option>  */}
-                {/* Add more countries as needed */}
               </select>
             </div>
             {errors.country && (

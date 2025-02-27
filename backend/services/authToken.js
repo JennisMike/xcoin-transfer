@@ -1,9 +1,7 @@
 const jwt = require("jsonwebtoken");
 require("dotenv").config();
 
-// Generates a token for a given user object.
 const generateToken = (user) => {
-  // Create a payload with the necessary user details.
   const payload = {
     id: user.id,
     email: user.email,

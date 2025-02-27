@@ -1,13 +1,9 @@
 import { useForm } from "react-hook-form";
 import { Mail, Phone, MessageSquare, Clock, Send } from "lucide-react";
-
-// Define form data type
-interface ContactFormData {
-  name: string;
-  email: string;
-  subject: string;
-  message: string;
-}
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faWhatsapp } from "@fortawesome/free-brands-svg-icons";
+import { ContactFormData } from "../../utils/types";
+import FloatingWhatsapp from "../FloatingWhatsapp";
 
 const ContactSection = () => {
   const {
@@ -15,6 +11,7 @@ const ContactSection = () => {
     handleSubmit,
     formState: { errors, isSubmitting },
   } = useForm<ContactFormData>();
+  const number = "+237676131512";
 
   const onSubmit = (data: ContactFormData) => {
     console.log("Form submitted:", data);
@@ -52,7 +49,7 @@ const ContactSection = () => {
                   </div>
                   <div>
                     <p className="text-sm text-gray-600">Email</p>
-                    <p className="text-gray-900">mikejennis753@outlook.com</p>
+                    <p className="text-gray-900">xcoin-service@outlook.com</p>
                   </div>
                 </div>
                 <div className="flex items-center gap-3">
@@ -62,6 +59,25 @@ const ContactSection = () => {
                   <div>
                     <p className="text-sm text-gray-600">Phone</p>
                     <p className="text-gray-900">+86 131 3063 7422</p>
+                  </div>
+                </div>
+                <div
+                  className="flex items-center gap-3"
+                  onClick={() => {
+                    const message =
+                      "Hello There, I wish to find at about your Xcoin transfer services.";
+                    open(`https://wa.me/${number}?text=${message}`, "_blank");
+                  }}
+                >
+                  <div className="bg-blue-50 p-3 rounded-full cursor-pointer">
+                    <FontAwesomeIcon
+                      icon={faWhatsapp}
+                      className="w-5 h-5 text-blue-600"
+                    />
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-600">Whatsapp</p>
+                    <p className="text-gray-900">{number}</p>
                   </div>
                 </div>
                 <div className="flex items-center gap-3">
@@ -200,6 +216,7 @@ const ContactSection = () => {
           </div>
         </div>
       </div>
+      <FloatingWhatsapp phone={number} />
     </div>
   );
 };

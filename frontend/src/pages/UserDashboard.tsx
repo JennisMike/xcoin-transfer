@@ -1,21 +1,118 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Sidebar from "../components/Sidebar";
 import DashboardHeader from "../components/DashboardHeader";
+import { Card, Subscription } from "../utils/types";
+import axios from "axios";
+import WalletBalanceCard from "../components/WalletBalanceCard";
 
 function UserDashboard() {
+  // For the wallet conversion functionality
   const [rmbValue, setRmbValue] = useState(0);
   const [amount, setAmount] = useState("");
+  const [cardDetails, setCardDetails] = useState<Card>({
+    balance: 0,
+    subscriptionType: "standard",
+    rate: 10.5,
+  });
+
+  useEffect(() => {
+    const fetchSubscription = async () => {
+      const url = `${import.meta.env.VITE_ROOT_URL}/subscriptions`;
+      try {
+        const response = await axios.get(url, { withCredentials: true });
+        console.log(response.data);
+        setCardDetails(response.data);
+      } catch (error) {
+        console.log(error);
+      }
+    };
+    fetchSubscription();
+  }, []);
+
+  const handleBuyXcoin = async () => {};
 
   const handleAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const xcoin = parseFloat(e.target.value);
-
     if (!isNaN(xcoin)) {
       setAmount(e.target.value);
-      setRmbValue(xcoin * 7);
+      setRmbValue(xcoin * cardDetails.rate);
     } else {
       setAmount("");
       setRmbValue(0);
     }
+  };
+
+  // Subscription state fetched from the backend
+  // For a free "standard" plan, we no longer use a trial period.
+  const [subscription, setSubscription] = useState<Subscription | null>({
+    type: "standard",
+    trialEnd: null, // not needed for a free plan
+  });
+
+  // we compare the current time with trialEnd.
+  const [isExpired, setIsExpired] = useState(false);
+
+  const changeCurrency = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault(); // Prevent page reload
+
+    if (!amount || parseInt(amount) <= 0) {
+      alert("Please enter a valid amount.");
+      return;
+    }
+
+    try {
+      const url = `${import.meta.env.VITE_ROOT_URL}/convert`;
+
+      const response = await axios.post(url, amount, { withCredentials: true });
+
+      if (response.status >= 300) {
+        throw new Error("Conversion failed. Please try again.");
+      }
+
+      const data = await response.data;
+      setRmbValue(data.convertedAmount); // Assuming API returns { convertedAmount: 100 }
+    } catch (error) {
+      console.error("Error converting currency:", error);
+      alert("Something went wrong. Please try again.");
+    }
+  };
+
+  // Fetch subscription data from the backend
+  useEffect(() => {
+    async function fetchSubscription() {
+      try {
+        const url = `${import.meta.env.VITE_ROOT_URL}/subscriptions`;
+        const response = await axios.get(url, { withCredentials: true });
+        if (response.status >= 300) {
+          throw new Error("Failed to fetch subscription");
+        }
+        const data: { type: string; trialEnd?: string } = response.data;
+        setSubscription({
+          type: data.type,
+          trialEnd: data.trialEnd ? new Date(data.trialEnd) : null,
+        });
+      } catch (error) {
+        console.error("Error fetching subscription:", error);
+      }
+    }
+    fetchSubscription();
+  }, []);
+
+  // For non-standard plans, check if the subscription (or trial period) is expired.
+  useEffect(() => {
+    if (subscription?.type !== "standard" && subscription?.trialEnd) {
+      const now = new Date();
+      setIsExpired(now > subscription.trialEnd);
+    } else {
+      // "Standard" is free and does not expire.
+      setIsExpired(false);
+    }
+  }, [subscription]);
+
+  // Dummy handler for payment/upgrade action
+  const handleUpgrade = () => {
+    // TODO: Integrate with your payment gateway or upgrade flow here.
+    alert("Redirecting to payment/upgrade flow...");
   };
 
   return (
@@ -25,13 +122,13 @@ function UserDashboard() {
         {/* Header */}
         <DashboardHeader />
 
-        {/* Main Dashboard Content */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {/* Wallet Balance Card */}
-          <div className="bg-linear-0 from-[#3B82F6] to-[#1D4ED8] text-white p-6 rounded-xl shadow-lg">
-            <h3 className="text-lg font-medium">Wallet Balance</h3>
-            <div className="text-4xl font-bold mt-2">1000 XCoin</div>
-          </div>
+          <WalletBalanceCard
+            balance={cardDetails.balance}
+            subscriptionType={cardDetails.subscriptionType}
+            isExpired={isExpired}
+          />
 
           {/* Currency Conversion Card */}
           <div className="bg-white p-6 rounded-xl shadow-lg">
@@ -50,7 +147,7 @@ function UserDashboard() {
               </select>
             </div>
 
-            <form className="space-y-4">
+            <form className="space-y-4" onSubmit={changeCurrency}>
               <label
                 htmlFor="amount"
                 className="block text-sm font-medium text-gray-700"
@@ -84,7 +181,7 @@ function UserDashboard() {
             <h3 className="text-lg font-medium text-gray-700 mb-4">
               Buy XCoin
             </h3>
-            <form className="space-y-4">
+            <form className="space-y-4" onSubmit={handleBuyXcoin}>
               <label
                 htmlFor="paymentMethod"
                 className="block text-sm font-medium text-gray-700"
@@ -98,7 +195,9 @@ function UserDashboard() {
               >
                 <option value="momo">MTN MoMo</option>
                 <option value="wechat">Alipay/WeChat</option>
-                <option value="bankTransfer" disabled>Bank Transfer</option>
+                <option value="bankTransfer" disabled>
+                  Bank Transfer
+                </option>
               </select>
               <button
                 type="submit"
@@ -148,6 +247,65 @@ function UserDashboard() {
                 </tr>
               </tbody>
             </table>
+          </div>
+
+          {/* Subscription/Upgrade Card */}
+          <div className="bg-white p-6 rounded-xl shadow-lg">
+            <h3 className="text-lg font-medium text-gray-700 mb-4">
+              Subscription Options
+            </h3>
+            <div className="space-y-4">
+              <label
+                htmlFor="subscriptionType"
+                className="block text-sm font-medium text-gray-700"
+              >
+                Select Card Type
+              </label>
+              <select
+                id="subscriptionType"
+                value={subscription?.type}
+                onChange={(e) => {
+                  const newType = e.target.value;
+                  setSubscription({
+                    ...subscription,
+                    type: newType,
+                    // For non-standard plans, set a trial period; standard remains free.
+                    trialEnd:
+                      newType === "standard"
+                        ? null
+                        : new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
+                  });
+                }}
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-sm"
+              >
+                <option value="standard">Standard (Free)</option>
+                <option value="premium">Premium</option>
+                <option disabled value="business">
+                  Business
+                </option>
+              </select>
+
+              {subscription?.type === "standard" ? (
+                <div>
+                  <p className="text-green-600">Enjoy your free plan!</p>
+                  {/* <button
+                    type="button"
+                    onClick={handleUpgrade}
+                    className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-md font-medium w-full shadow-md mt-2"
+                  >
+                    Upgrade Now
+                  </button> */}
+                </div>
+              ) : (
+                <button
+                  type="button"
+                  onClick={handleUpgrade}
+                  className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-md font-medium w-full shadow-md"
+                >
+                  Upgrade Now
+                </button>
+              )}
+            </div>
           </div>
         </div>
       </main>

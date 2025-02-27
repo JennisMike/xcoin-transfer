@@ -20,7 +20,7 @@ const LandingPage = () => {
       <FeatureSection />
 
       {/* Calculator Section */}
-      
+
       <CalculatorSection />
 
       {/* How it works */}

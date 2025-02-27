@@ -3,6 +3,7 @@ import { Avatar, AvatarImage, AvatarFallback } from "../components/ui/avatar";
 import DefaultProfile from "../assets/profile.png";
 import { ChevronDown, LogOut } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { UserProfile } from "../utils/types";
 
 const Header: React.FC = () => {
   const [isDropdownOpen, setIsDropdownOpen] = useState<boolean>(false);
@@ -15,7 +16,7 @@ const Header: React.FC = () => {
 
   // Close dropdown when clicking outside
   useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
+    const handleClickOutside = async (event: MouseEvent) => {
       if (
         dropdownRef.current &&
         !dropdownRef.current.contains(event.target as Node)
@@ -28,15 +29,21 @@ const Header: React.FC = () => {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  const handleLogout = (): void => {
+  const handleLogout = async () => {
     console.log("Logout clicked");
   };
+  const user: UserProfile = JSON.parse(sessionStorage.getItem("user") || "");
+  const fName = user.name.split(" ");
+
+  console.log();
 
   return (
     <header className="flex justify-between items-center mb-8">
-      <h1 className="text-2xl font-semibold text-gray-800">Welcome, User</h1>
+      <h1 className="text-2xl font-semibold text-gray-800">
+        Welcome, {user != null ? user.name : ""}
+      </h1>
       <div className="relative" ref={dropdownRef}>
-        <div className="flex flex-row justify-center items-center">
+        <div className="flex flex-row justify-center items-center hover:scale-95 cursor-pointer">
           <button
             type="button"
             onClick={() => {
@@ -51,7 +58,19 @@ const Header: React.FC = () => {
               </Avatar>
             </div>
           </button>
-          <ChevronDown onClick={toggleDropdown} />
+          <div
+            className="flex cursor-pointer"
+            onClick={() => {
+              navigate("/profile");
+            }}
+          >
+            <ChevronDown onClick={toggleDropdown} className="hidden" />
+            {fName.map((char, index) => {
+              return (
+                <span key={index}>{char.charAt(0).toUpperCase() + "."}</span>
+              );
+            })}
+          </div>
         </div>
         {isDropdownOpen && (
           <div className="absolute right-0 mt-2 w-48 bg-white border border-gray-200 rounded-md shadow-lg py-2 z-50 cursor-pointer">

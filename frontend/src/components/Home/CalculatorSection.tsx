@@ -1,5 +1,5 @@
 import { SetStateAction, useState } from "react";
-import { ExhangeRateType } from "../../types";
+import { ExhangeRateType } from "../../utils/types";
 
 function CalculatorSection() {
   const [amount, setAmount] = useState("");

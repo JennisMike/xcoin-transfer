@@ -1,7 +1,8 @@
 import { useState, useEffect } from "react";
 import Sidebar from "../components/Sidebar";
-import { UserProfile } from "../types";
-import { mockProfile } from "../data";
+import { UserProfile } from "../utils/types";
+import { mockProfile } from "../utils/data";
+import axios from "axios";
 
 function ProfilePage() {
   const [profile, setProfile] = useState<UserProfile | null>(null);
@@ -16,12 +17,18 @@ function ProfilePage() {
   useEffect(() => {
     const fetchProfile = async () => {
       setIsLoading(true);
-
-      setTimeout(() => {
-        setProfile(mockProfile);
-        setFormData(mockProfile);
-        setIsLoading(false);
-      }, 800);
+      const url = `${import.meta.env.VITE_ROOT_URL}/auth/profile`;
+      try {
+        const response = await axios.get(url, { withCredentials: true });
+        console.log(response.data);
+        setTimeout(() => {
+          setProfile(mockProfile);
+          setFormData(mockProfile);
+          setIsLoading(false);
+        }, 800);
+      } catch (error) {
+        console.log(error);
+      }
     };
 
     fetchProfile();
