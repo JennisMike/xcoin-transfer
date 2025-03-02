@@ -1,19 +1,35 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, FormEvent } from "react";
 import Sidebar from "../components/Sidebar";
 import DashboardHeader from "../components/DashboardHeader";
-import { Card, Subscription } from "../utils/types";
+import { Card, Subscription, Transaction } from "../utils/types";
 import axios from "axios";
 import WalletBalanceCard from "../components/WalletBalanceCard";
+import getToken from "../utils/GetCampayToken";
 
 function UserDashboard() {
   // For the wallet conversion functionality
   const [rmbValue, setRmbValue] = useState(0);
   const [amount, setAmount] = useState("");
+  const [transactions, setTransactions] = useState<Transaction[] | null>();
   const [cardDetails, setCardDetails] = useState<Card>({
     balance: 0,
     subscriptionType: "standard",
     rate: 10.5,
   });
+
+  useEffect(() => {
+    const fetchTransactions = async () => {
+      try {
+        const url = `${import.meta.env.VITE_ROOT_URL}/transactions`;
+        const response = await axios.get(url, { withCredentials: true });
+        console.log(response.data);
+        setTransactions(response.data);
+      } catch (error) {
+        console.log(error);
+      }
+    };
+    fetchTransactions();
+  }, []);
 
   useEffect(() => {
     const fetchSubscription = async () => {
@@ -29,7 +45,23 @@ function UserDashboard() {
     fetchSubscription();
   }, []);
 
-  const handleBuyXcoin = async () => {};
+  const handleBuyXcoin = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+
+    // Access form data
+    const form = event.currentTarget; // Get the current form element
+
+    // Example: Assuming you have an input with id="amount"
+    const accountType = (form.elements.namedItem("method") as HTMLInputElement)
+      .value;
+
+    // Log or use the amount value
+    if (accountType.toLowerCase().includes("momo".toLowerCase())) {
+      await getToken();
+    }
+
+    // Add your logic to handle the buy action...
+  };
 
   const handleAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const xcoin = parseFloat(e.target.value);
@@ -220,31 +252,26 @@ function UserDashboard() {
                   <th className="p-3 text-left text-gray-700">
                     Amount (XCoin)
                   </th>
-                  <th className="p-3 text-left text-gray-700">Amount (RMB)</th>
+                  <th className="p-3 text-left text-gray-700">Amount</th>
                   <th className="p-3 text-left text-gray-700">Status</th>
                 </tr>
               </thead>
               <tbody>
-                <tr className="border-b hover:bg-gray-50">
-                  <td className="p-3">2025-02-10</td>
-                  <td className="p-3">500</td>
-                  <td className="p-3">3500</td>
-                  <td className="p-3">
-                    <span className="bg-green-100 text-green-700 px-3 py-1 rounded-full text-sm font-medium">
-                      Completed
-                    </span>
-                  </td>
-                </tr>
-                <tr className="border-b hover:bg-gray-50">
-                  <td className="p-3">2025-02-12</td>
-                  <td className="p-3">300</td>
-                  <td className="p-3">2100</td>
-                  <td className="p-3">
-                    <span className="bg-yellow-100 text-yellow-700 px-3 py-1 rounded-full text-sm font-medium">
-                      Pending
-                    </span>
-                  </td>
-                </tr>
+                {transactions?.map((transaction) => (
+                  <tr
+                    key={transaction.id}
+                    className="border-b hover:bg-gray-50"
+                  >
+                    <td className="p-3">{transaction.date}</td>
+                    <td className="p-3">{transaction.amount}</td>
+                    <td className="p-3">{transaction.targetAmount}</td>
+                    <td className="p-3">
+                      <span className="bg-green-100 text-green-700 px-3 py-1 rounded-full text-sm font-medium">
+                        {transaction.status}
+                      </span>
+                    </td>
+                  </tr>
+                ))}
               </tbody>
             </table>
           </div>
@@ -287,7 +314,9 @@ function UserDashboard() {
 
               {subscription?.type === "standard" ? (
                 <div>
-                  <p className="text-green-600">Enjoy your free plan!</p>
+                  <p className="text-green-600">
+                    Enjoy your {subscription.type} plan!
+                  </p>
                   {/* <button
                     type="button"
                     onClick={handleUpgrade}

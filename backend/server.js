@@ -3,6 +3,7 @@ const { connectDB, sequelize } = require("./services/db");
 const userRoutes = require("./routes/authRoutes");
 const transactionRoutes = require("./routes/transactionRoutes");
 const subscriptionRoutes = require("./routes/subscriptionRoutes");
+const paymentRoutes = require("./routes/paymentRoutes");
 require("dotenv").config();
 const cors = require("cors");
 const session = require("express-session");
@@ -47,6 +48,7 @@ app.use(
 app.use("/api/auth", userRoutes);
 app.use("/api/transactions", transactionRoutes);
 app.use("/api/subscriptions", subscriptionRoutes);
+app.use("/api/payments", paymentRoutes);
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
