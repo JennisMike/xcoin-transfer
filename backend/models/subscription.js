@@ -44,7 +44,7 @@ const Subscription = sequelize.define("Subscription", {
     defaultValue: "active",
   },
   paymentDetails: {
-    type: DataTypes.JSONB,
+    type: DataTypes.JSON,
     allowNull: true,
   },
 });

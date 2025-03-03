@@ -76,11 +76,6 @@ const User = sequelize.define(
       type: DataTypes.STRING,
       defaultValue: "en",
     },
-    notifications: {
-      type: DataTypes.JSONB,
-      defaultValue: {},
-      allowNull: true,
-    },
     sendEmailNotifcations: {
       type: DataTypes.BOOLEAN,
       defaultValue: false,

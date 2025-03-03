@@ -5,9 +5,7 @@ const Redis = require("ioredis");
 
 // Function to create Redis client
 const createRedisClient = () => {
-  const host =
-    process.env.REDIS_HOST ||
-    "https://xcoin-transfer-gwatqz.serverless.use1.cache.amazonaws.com";
+  const host = process.env.REDIS_HOST || "localhost";
   const port = Number(process.env.REDIS_PORT) || 6379;
   const password = process.env.REDIS_PASSWORD || null;
 

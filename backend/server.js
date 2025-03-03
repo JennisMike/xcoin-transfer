@@ -17,7 +17,11 @@ app.use(express.json()); // Middleware to parse JSON request bodies.
 connectDB();
 
 const corsOptions = {
-  origin: ["http://localhost:5173", "http://localhost:5174"], // Allowed domains
+  origin: [
+    "http://localhost:5173",
+    "http://localhost:5174",
+    "http://18.212.27.82:3000",
+  ], // Allowed domains
   methods: ["GET", "POST"], // Allowed methods (optional)
   credentials: true, // Allow credentials (optional)
   optionsSuccessStatus: 200, // For legacy browser support (optional)
@@ -49,6 +53,10 @@ app.use("/api/auth", userRoutes);
 app.use("/api/transactions", transactionRoutes);
 app.use("/api/subscriptions", subscriptionRoutes);
 app.use("/api/payments", paymentRoutes);
+
+app.get("/", (req, res) => {
+  res.json({ message: "Url is working well" });
+});
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
