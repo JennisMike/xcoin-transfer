@@ -33,8 +33,16 @@ try {
 }
 
 router.post("/token", async (req, res) => {
-  const username = process.env.CAMPAY_APP_USERNAME;
-  const password = process.env.CAMPAY_APP_PASSWORD;
+  if (!req.session.user) {
+    return res.status(401).json({ error: "Unauthorized" });
+  }
+
+  const url = `${process.env.CAMPAY_BASE_URL}/api/token/`;
+
+  const data = {
+    username: process.env.CAMPAY_APP_USERNAME,
+    password: process.env.CAMPAY_APP_PASSWORD,
+  };
 
   try {
     // Check if token is already cached
@@ -44,14 +52,12 @@ router.post("/token", async (req, res) => {
       return res.json({ token: cachedToken });
     }
 
-    // If not cached, fetch a new token
-    const response = await axios.post(
-      `${process.env.CAMPAY_BASE_URL}/api/token`,
-      {
-        username,
-        password,
-      }
-    );
+    console.log("Fetching new token...");
+    const response = await axios.post(url, data, {
+      headers: {
+        "Content-Type": "application/json",
+      },
+    });
 
     const token = response.data.token;
 
@@ -62,6 +68,50 @@ router.post("/token", async (req, res) => {
   } catch (error) {
     console.error("Error fetching token:", error.message);
     res.status(500).json({ error: "Failed to fetch token" });
+  }
+});
+
+router.post("/payment-link", async (req, res) => {
+  if (!req.session.user) {
+    return res.status(401).json({ error: "Unauthorized" });
+  }
+  try {
+    // Retrieve the token from Redis
+    const token = await redis.get("campay_token");
+    if (!token) {
+      return res.status(401).json({ error: "Unauthorized" });
+    }
+
+    const url = `${process.env.CAMPAY_BASE_URL}/api/get_payment_link/`;
+
+    // Prepare the data for the API request
+    const data = {
+      amount: req.body.amount || "5",
+      currency: req.body.currency || "XAF",
+      description: req.body.description || "Test",
+      external_reference: req.body.external_reference || "",
+      redirect_url: req.body.redirect_url || "https://example.com",
+    };
+
+    // Make the API request
+    const response = await axios.post(url, data, {
+      headers: {
+        Authorization: `Token ${token}`,
+        "Content-Type": "application/json",
+      },
+    });
+
+    // Send the response from the external API back to the client
+    res.json(response.data);
+  } catch (error) {
+    // Handle errors and send a response
+    console.error(
+      "Error:",
+      error.response ? error.response.data : error.message
+    );
+    res.status(error.response ? error.response.status : 500).json({
+      error: error.response ? error.response.data : "Internal Server Error",
+    });
   }
 });
 

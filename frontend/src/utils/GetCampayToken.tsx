@@ -16,7 +16,7 @@ async function getToken(): Promise<string | null> {
     }
 
     const data = await response.json();
-    return data.token; // Assuming the token is returned under a 'token' key
+    return data.token;
   } catch (error) {
     if (error instanceof Error) {
       console.error("Error making POST request:", error.message); // Detailed error message

@@ -5,6 +5,7 @@ import { Card, Subscription, Transaction } from "../utils/types";
 import axios from "axios";
 import WalletBalanceCard from "../components/WalletBalanceCard";
 import getToken from "../utils/GetCampayToken";
+import getPaymentLink from "../utils/GetPaymentLink";
 
 function UserDashboard() {
   // For the wallet conversion functionality
@@ -56,11 +57,21 @@ function UserDashboard() {
       .value;
 
     // Log or use the amount value
-    if (accountType.toLowerCase().includes("momo".toLowerCase())) {
+    if (accountType.toLowerCase().includes("MOMO".toLowerCase())) {
+      console.log("MTN MoMo selected");
       await getToken();
+      const link = await getPaymentLink(
+        10,
+        "XAF",
+        "Buy XCoin",
+        `${import.meta.env.BASE_URL}dashboard`
+      );
+      window.location.href = link;
+    } else if (accountType.toLowerCase().includes("Alipay".toLowerCase())) {
+      console.log("Alipay/WeChat selected");
+    } else {
+      console.log("Bank Transfer selected");
     }
-
-    // Add your logic to handle the buy action...
   };
 
   const handleAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
