@@ -2,7 +2,7 @@ import { useState, useEffect, FormEvent } from "react";
 import Sidebar from "../components/Sidebar";
 import DashboardHeader from "../components/DashboardHeader";
 import { Card, Subscription, Transaction } from "../utils/types";
-import axios from "axios";
+import axios, { AxiosError } from "axios";
 import WalletBalanceCard from "../components/WalletBalanceCard";
 import getToken from "../utils/GetCampayToken";
 import getPaymentLink from "../utils/GetPaymentLink";
@@ -10,6 +10,7 @@ import getPaymentLink from "../utils/GetPaymentLink";
 function UserDashboard() {
   // For the wallet conversion functionality
   const [rmbValue, setRmbValue] = useState(0);
+  const [currency, setCurrency] = useState("XAF");
   const [amount, setAmount] = useState("");
   const [transactions, setTransactions] = useState<Transaction[] | null>();
   const [cardDetails, setCardDetails] = useState<Card>({
@@ -17,6 +18,12 @@ function UserDashboard() {
     subscriptionType: "standard",
     rate: 10.5,
   });
+
+  const sortedTransactions = transactions
+    ?.slice() // Create a shallow copy to avoid mutating the original array
+    .sort((a, b) => a.amount - b.amount);
+
+  const limitedTransactions = sortedTransactions?.slice(0, 5);
 
   useEffect(() => {
     const fetchTransactions = async () => {
@@ -46,6 +53,36 @@ function UserDashboard() {
     fetchSubscription();
   }, []);
 
+  const handlePostPayment = async () => {
+    try {
+      const paymentId = sessionStorage.getItem("transactionId");
+      if (!paymentId) {
+        throw new Error("An error occured. Please try again.");
+      }
+      const url = `${
+        import.meta.env.VITE_ROOT_URL
+      }/payments/status/${paymentId}`;
+      const response = await axios.post(url, { withCredentials: true });
+      console.log(response.data);
+      if (response.data.status === "success") {
+        alert("Payment successful!");
+        await axios.post(
+          `${import.meta.env.VITE_ROOT_URL}/subscriptions/add-money`,
+          {
+            amount: 5,
+            targetAmount: 5 * cardDetails.rate,
+            status: "success",
+          }
+        );
+      }
+    } catch (error) {
+      if (error instanceof AxiosError) {
+        console.error("Error making POST request:", error.message);
+        alert(`Failed to post payment: ${error.message}. Please try again.`);
+      }
+    }
+  };
+
   const handleBuyXcoin = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
 
@@ -55,18 +92,32 @@ function UserDashboard() {
     // Example: Assuming you have an input with id="amount"
     const accountType = (form.elements.namedItem("method") as HTMLInputElement)
       .value;
+    const amount = (form.elements.namedItem("amount") as HTMLInputElement)
+      .value;
 
     // Log or use the amount value
     if (accountType.toLowerCase().includes("MOMO".toLowerCase())) {
       console.log("MTN MoMo selected");
       await getToken();
-      const link = await getPaymentLink(
-        10,
-        "XAF",
-        "Buy XCoin",
-        `${import.meta.env.BASE_URL}dashboard`
-      );
-      window.location.href = link;
+      const link = await getPaymentLink({
+        amount: amount,
+        currency: "XAF",
+        description: "Test",
+        redirectUrl: `${import.meta.env.BASE_URL}dashboard`,
+      });
+
+      alert("Redirecting.... Please do not close the window");
+      // Open the payment link in a new window
+      const paymentWindow = window.open(link, "_blank");
+
+      // Polling to check if the window is closed
+      const checkWindowClosed = setInterval(() => {
+        if (paymentWindow?.closed) {
+          clearInterval(checkWindowClosed); // Stop checking if closed
+          console.log("Payment window closed. Proceeding with next steps...");
+          handlePostPayment();
+        }
+      }, 1000); // Check every second
     } else if (accountType.toLowerCase().includes("Alipay".toLowerCase())) {
       console.log("Alipay/WeChat selected");
     } else {
@@ -183,6 +234,7 @@ function UserDashboard() {
                 title="destCurrency"
                 name="dest-currency"
                 id="destCurrency"
+                onChange={(e) => setCurrency(e.target.value)}
                 className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
               >
                 <option value="CFA">FCFA</option>
@@ -202,13 +254,13 @@ function UserDashboard() {
                 id="amount"
                 name="amount"
                 placeholder="Enter amount"
-                value={amount}
                 onChange={handleAmountChange}
+                min={0}
                 required
                 className="w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
               />
               <p className="text-gray-700">
-                Equivalent in RMB: <strong>{rmbValue}</strong>
+                Equivalent in {currency}: <strong>{rmbValue}</strong>
               </p>
               <button
                 type="submit"
@@ -242,6 +294,15 @@ function UserDashboard() {
                   Bank Transfer
                 </option>
               </select>
+              <input
+                type="number"
+                id="amount"
+                name="amount"
+                placeholder="Enter amount"
+                required
+                disabled={false}
+                className="w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+              />
               <button
                 type="submit"
                 className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-md font-medium w-full shadow-md"
@@ -268,7 +329,7 @@ function UserDashboard() {
                 </tr>
               </thead>
               <tbody>
-                {transactions?.map((transaction) => (
+                {limitedTransactions?.map((transaction) => (
                   <tr
                     key={transaction.id}
                     className="border-b hover:bg-gray-50"

@@ -6,6 +6,7 @@ async function getToken(): Promise<string | null> {
       headers: {
         "Content-Type": "application/json",
       },
+      credentials: "include",
     });
 
     if (!response.ok) {
@@ -25,7 +26,7 @@ async function getToken(): Promise<string | null> {
       console.error("Unexpected error:", error);
       alert("An unexpected error occurred. Please try again.");
     }
-    return null; // return null since the token was not retrieved.
+    return null;
   }
 }
 

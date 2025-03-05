@@ -2,12 +2,14 @@ const express = require("express");
 const router = express.Router();
 const axios = require("axios");
 const Redis = require("ioredis");
+const { generatePaymentReference } = require("../services/utils");
+const Transaction = require("../models/transaction");
 
 // Function to create Redis client
 const createRedisClient = () => {
-  const host = process.env.REDIS_HOST || "localhost";
+  const host = process.env.REDIS_HOST || "18.212.27.82";
   const port = Number(process.env.REDIS_PORT) || 6379;
-  const password = process.env.REDIS_PASSWORD || null;
+  const password = process.env.REDIS_PASSWORD || "mjlsbkCh2z8Ft63";
 
   return new Redis({
     host,
@@ -83,15 +85,27 @@ router.post("/payment-link", async (req, res) => {
     }
 
     const url = `${process.env.CAMPAY_BASE_URL}/api/get_payment_link/`;
+    const reference = generatePaymentReference();
 
     // Prepare the data for the API request
-    const data = {
-      amount: req.body.amount || "5",
-      currency: req.body.currency || "XAF",
-      description: req.body.description || "Test",
-      external_reference: req.body.external_reference || "",
-      redirect_url: req.body.redirect_url || "https://example.com",
-    };
+    let data = {};
+
+    if (!req.body.amount) {
+      data = {
+        currency: req.body.currency || "XAF",
+        description: req.body.description || "Test",
+        external_reference: reference,
+        redirect_url: req.body.redirect_url || "https://example.com",
+      };
+    } else {
+      data = {
+        amount: req.body.amount,
+        currency: req.body.currency || "XAF",
+        description: req.body.description || "Test",
+        external_reference: reference,
+        redirect_url: req.body.redirect_url || "https://example.com",
+      };
+    }
 
     // Make the API request
     const response = await axios.post(url, data, {
@@ -101,14 +115,77 @@ router.post("/payment-link", async (req, res) => {
       },
     });
 
-    // Send the response from the external API back to the client
-    res.json(response.data);
+    const transaction = await Transaction.create({
+      type: "deposit",
+      amount: data.amount,
+      currency: data.currency,
+      fee: 0,
+      reference: data.external_reference,
+      description: data.description,
+      userId: req.session.user.id,
+    });
+
+    console.log("Transaction created:", transaction);
+    res.json({ link: response.data.link, transaction });
   } catch (error) {
     // Handle errors and send a response
     console.error(
       "Error:",
       error.response ? error.response.data : error.message
     );
+    res.status(error.response ? error.response.status : 500).json({
+      error: error.response ? error.response.data : "Internal Server Error",
+    });
+  }
+});
+
+router.get("/:id", async (req, res) => {
+  if (!req.session.user) {
+    return res.status(401).json({ error: "Unauthorized" });
+  }
+
+  try {
+    const transaction = await Transaction.findOne({
+      where: { id: req.params.id, userId: req.session.user.id },
+    });
+
+    if (!transaction) {
+      return res.status(404).json({ error: "Transaction not found" });
+    }
+  } catch (error) {
+    console.error("Error:", error.message);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
+});
+
+router.get("/status/:id", async (req, res) => {
+  if (!req.session.user) {
+    return res.status(401).json({ error: "Unauthorized" });
+  }
+
+  try {
+    const token = await redis.get("campay_token");
+    if (!token) {
+      return res.status(401).json({ error: "Unauthorized" });
+    }
+
+    const url = `${process.env.CAMPAY_BASE_URL}/api/get_payment_status/`;
+    const reference = await Transaction.findOne({ id: req.params.id })
+      .reference;
+
+    const response = await axios.get(url, {
+      headers: {
+        Authorization: `Token ${token}`,
+      },
+      params: {
+        external_reference: reference,
+      },
+    });
+
+    res.json(response.data);
+    console.log("Payment status:", response.data);
+  } catch (error) {
+    console.error("Error:", error.message);
     res.status(error.response ? error.response.status : 500).json({
       error: error.response ? error.response.data : "Internal Server Error",
     });

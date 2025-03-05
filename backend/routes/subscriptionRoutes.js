@@ -1,6 +1,7 @@
 const express = require("express");
 const Subscription = require("../models/subscription"); // Adjust path as needed
 const dayjs = require("dayjs");
+const Transaction = require("../models/transaction");
 
 const router = express.Router();
 
@@ -79,7 +80,7 @@ router.get("/", async (req, res) => {
 router.patch("/status", async (req, res) => {
   try {
     const { id } = req.session.user;
-    const subscription = await Subscription.findOne({ where: { userId } });
+    const subscription = await Subscription.findOne({ where: { userId: id } });
     if (!subscription) {
       return res.status(404).json({ error: "Subscription not found" });
     }
@@ -187,6 +188,43 @@ router.delete("/cancel", async (req, res) => {
     subscription.status = "expired";
     await subscription.save();
     res.json({ message: "Subscription canceled successfully" });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+router.put("/add-money", async (req, res) => {
+  try {
+    if (!req.session.user) {
+      return res.status(401).json({ error: "Unauthorized" });
+    }
+    const { id } = req.session.user;
+    const { amount, status } = req.body;
+    const subscription = await Subscription.findOne({ where: { userId: id } });
+    if (!subscription) {
+      return res.status(404).json({ error: "Subscription not found" });
+    }
+
+    if (!status) {
+      return res.status(400).json({ error: "Invalid status" });
+    }
+
+    subscription.balance += amount;
+    await subscription.save();
+    res.json(subscription);
+    console.log("Subscription balance updated successfully", subscription);
+    const transaction = await Transaction.create({
+      type: "buy",
+      amount,
+      currency: "XAF",
+      fee: 0,
+      reference: "Buying Xcoin",
+      description: "Buying Xcoin",
+      userId: id,
+    });
+
+    console.log("Transaction created:", transaction);
+    res.json(transaction);
   } catch (error) {
     res.status(500).json({ error: error.message });
   }

@@ -1,21 +1,33 @@
 import axios, { AxiosError } from "axios";
 
-async function getPaymentLink(
-  amount: number,
-  currency: string,
-  description: string,
-  redirectUrl: string
-) {
+async function getPaymentLink({
+  amount,
+  currency,
+  description,
+  redirectUrl,
+}: {
+  amount?: string;
+  currency?: string;
+  description?: string;
+  redirectUrl?: string;
+}): Promise<string | undefined> {
   try {
-    const response = await axios.post("http://localhost:3000/payment-link", {
-      amount: amount || "5",
-      currency: currency || "XAF",
-      description: description || "Test",
-      redirect_url: redirectUrl || "http://localhost:5173/dashboard",
-    });
+    console.log("Fetching payment link...");
+    const url = import.meta.env.VITE_ROOT_URL;
+    const response = await axios.post(
+      `${url}/payments/payment-link`,
+      {
+        amount: amount,
+        currency: currency || "XAF",
+        description: description || "Test",
+        redirect_url: redirectUrl || "http://localhost:5173/dashboard",
+      },
+      { withCredentials: true }
+    );
 
     console.log("Payment link:", response.data);
-    return response.data;
+    sessionStorage.setItem("transactionId", response.data.transaction.id);
+    return response.data.link;
   } catch (error: unknown) {
     console.error(
       "Error fetching payment link:",

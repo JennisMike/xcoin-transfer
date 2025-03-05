@@ -6,4 +6,10 @@ const isAuthenticated = (req, res, next) => {
   }
 };
 
-module.exports = { isAuthenticated };
+function generatePaymentReference() {
+  const timestamp = Date.now();
+  const randomNum = Math.floor(Math.random() * 10000); 
+  return `PAY${timestamp}${randomNum}`; 
+}
+
+module.exports = { isAuthenticated, generatePaymentReference };

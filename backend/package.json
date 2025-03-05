@@ -21,7 +21,8 @@
     "pg-hstore": "^2.3.4",
     "postgres": "^3.4.5",
     "sequelize": "^6.37.5",
-    "sqlite3": "^5.1.7"
+    "sqlite3": "^5.1.7",
+    "uuid": "^11.1.0"
   },
   "name": "xcoin-transfer-backend",
   "version": "1.0.0",

@@ -87,14 +87,14 @@ router.get("/:id", async (req, res) => {
 // Update a transaction
 router.put("/:id", async (req, res) => {
   try {
-    const { status, description } = req.body;
+    const { status } = req.body;
 
     const transaction = await Transaction.findByPk(req.params.id);
     if (!transaction) {
       return res.status(404).json({ error: "Transaction not found" });
     }
 
-    await transaction.update({ status, description });
+    await transaction.update({ status });
 
     res.json(transaction);
   } catch (error) {
