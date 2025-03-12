@@ -2,16 +2,21 @@ import { useState, useEffect, FormEvent } from "react";
 import Sidebar from "../components/Sidebar";
 import DashboardHeader from "../components/DashboardHeader";
 import { Card, Subscription, Transaction } from "../utils/types";
-import axios, { AxiosError } from "axios";
+import axios from "axios";
 import WalletBalanceCard from "../components/WalletBalanceCard";
 import getToken from "../utils/GetCampayToken";
-import getPaymentLink from "../utils/GetPaymentLink";
+import PaymentModal from "../components/PaymentModal";
+import useModal from "../components/UseModal";
+import { decryptData, isEncryptedResponse } from "../utils/CryptoService";
 
 function UserDashboard() {
   // For the wallet conversion functionality
   const [rmbValue, setRmbValue] = useState(0);
+  const { isOpen, openModal, closeModal } = useModal();
   const [currency, setCurrency] = useState("XAF");
   const [amount, setAmount] = useState("");
+  const [buyAmt, setBuyAmt] = useState("");
+  const [buyCurrency, setBuyCurrency] = useState("");
   const [transactions, setTransactions] = useState<Transaction[] | null>();
   const [cardDetails, setCardDetails] = useState<Card>({
     balance: 0,
@@ -23,15 +28,19 @@ function UserDashboard() {
     ?.slice() // Create a shallow copy to avoid mutating the original array
     .sort((a, b) => a.amount - b.amount);
 
-  const limitedTransactions = sortedTransactions?.slice(0, 5);
+  const limitedTransactions = sortedTransactions?.slice(0, 3);
 
   useEffect(() => {
     const fetchTransactions = async () => {
       try {
         const url = `${import.meta.env.VITE_ROOT_URL}/transactions`;
         const response = await axios.get(url, { withCredentials: true });
-        console.log(response.data);
-        setTransactions(response.data);
+        if (isEncryptedResponse(response.data)) {
+          const decryptedData: Transaction[] = await decryptData(response.data);
+          setTransactions(decryptedData);
+        } else {
+          setTransactions(response.data);
+        }
       } catch (error) {
         console.log(error);
       }
@@ -44,8 +53,12 @@ function UserDashboard() {
       const url = `${import.meta.env.VITE_ROOT_URL}/subscriptions`;
       try {
         const response = await axios.get(url, { withCredentials: true });
-        console.log(response.data);
-        setCardDetails(response.data);
+        if (isEncryptedResponse(response.data)) {
+          const decryptedData: Card = await decryptData(response.data);
+          setCardDetails(decryptedData);
+        } else {
+          setCardDetails(response.data);
+        }
       } catch (error) {
         console.log(error);
       }
@@ -53,75 +66,62 @@ function UserDashboard() {
     fetchSubscription();
   }, []);
 
-  const handlePostPayment = async () => {
-    try {
-      const paymentId = sessionStorage.getItem("transactionId");
-      if (!paymentId) {
-        throw new Error("An error occured. Please try again.");
-      }
-      const url = `${
-        import.meta.env.VITE_ROOT_URL
-      }/payments/status/${paymentId}`;
-      const response = await axios.post(url, { withCredentials: true });
-      console.log(response.data);
-      if (response.data.status === "success") {
-        alert("Payment successful!");
-        await axios.post(
-          `${import.meta.env.VITE_ROOT_URL}/subscriptions/add-money`,
-          {
-            amount: 5,
-            targetAmount: 5 * cardDetails.rate,
-            status: "success",
-          }
-        );
-      }
-    } catch (error) {
-      if (error instanceof AxiosError) {
-        console.error("Error making POST request:", error.message);
-        alert(`Failed to post payment: ${error.message}. Please try again.`);
-      }
-    }
-  };
+  // const checkPaymentStatus = async (paymentId: string) => {
+  //   try {
+  //     const url = `${
+  //       import.meta.env.VITE_ROOT_URL
+  //     }/payments/status/${paymentId}`;
+  //     const response = await axios.get(url, { withCredentials: true });
+  //     console.log(response.data);
+
+  //     if (response.data.status === "success") {
+  //       alert("Payment successful!");
+  //       await axios.post(
+  //         `${import.meta.env.VITE_ROOT_URL}/subscriptions/add-money`,
+  //         {
+  //           amount: 5,
+  //           targetAmount: 5 * cardDetails.rate,
+  //           status: "success",
+  //         }
+  //       );
+  //     }
+  //   } catch (error) {
+  //     console.error(
+  //       "Error fetching payment status:",
+  //       error instanceof AxiosError ? error.message : String(error)
+  //     );
+  //   }
+  // };
+
+  // ✅ Extracted function for polling until the window closes
+  // const waitForWindowClose = (
+  //   paymentWindow: Window | null,
+  //   paymentId: string
+  // ) => {
+  //   const interval = setInterval(() => {
+  //     if (paymentWindow && paymentWindow.closed) {
+  //       clearInterval(interval); // Stop checking
+  //       checkPaymentStatus(paymentId); // ✅ Check status after window closes
+  //     }
+  //   }, 1000); // Check every second
+  // };
 
   const handleBuyXcoin = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
 
     // Access form data
-    const form = event.currentTarget; // Get the current form element
-
-    // Example: Assuming you have an input with id="amount"
+    const form = event.currentTarget;
     const accountType = (form.elements.namedItem("method") as HTMLInputElement)
       .value;
     const amount = (form.elements.namedItem("amount") as HTMLInputElement)
       .value;
 
-    // Log or use the amount value
-    if (accountType.toLowerCase().includes("MOMO".toLowerCase())) {
+    if (accountType.toLowerCase().includes("momo")) {
       console.log("MTN MoMo selected");
+      openModal();
       await getToken();
-      const link = await getPaymentLink({
-        amount: amount,
-        currency: "XAF",
-        description: "Test",
-        redirectUrl: `${import.meta.env.BASE_URL}dashboard`,
-      });
-
-      alert("Redirecting.... Please do not close the window");
-      // Open the payment link in a new window
-      const paymentWindow = window.open(link, "_blank");
-
-      // Polling to check if the window is closed
-      const checkWindowClosed = setInterval(() => {
-        if (paymentWindow?.closed) {
-          clearInterval(checkWindowClosed); // Stop checking if closed
-          console.log("Payment window closed. Proceeding with next steps...");
-          handlePostPayment();
-        }
-      }, 1000); // Check every second
-    } else if (accountType.toLowerCase().includes("Alipay".toLowerCase())) {
-      console.log("Alipay/WeChat selected");
-    } else {
-      console.log("Bank Transfer selected");
+      setBuyAmt(amount);
+      setBuyCurrency("XAF");
     }
   };
 
@@ -163,8 +163,12 @@ function UserDashboard() {
         throw new Error("Conversion failed. Please try again.");
       }
 
-      const data = await response.data;
-      setRmbValue(data.convertedAmount); // Assuming API returns { convertedAmount: 100 }
+      if (isEncryptedResponse(response.data)) {
+        const data: { convertedAmount: number } = await decryptData(
+          response.data
+        );
+        setRmbValue(data.convertedAmount);
+      }
     } catch (error) {
       console.error("Error converting currency:", error);
       alert("Something went wrong. Please try again.");
@@ -180,11 +184,15 @@ function UserDashboard() {
         if (response.status >= 300) {
           throw new Error("Failed to fetch subscription");
         }
-        const data: { type: string; trialEnd?: string } = response.data;
-        setSubscription({
-          type: data.type,
-          trialEnd: data.trialEnd ? new Date(data.trialEnd) : null,
-        });
+        if (isEncryptedResponse(response.data)) {
+          const data: { type: string; trialEnd?: string } = await decryptData(
+            response.data
+          );
+          setSubscription({
+            type: data.type,
+            trialEnd: data.trialEnd ? new Date(data.trialEnd) : null,
+          });
+        }
       } catch (error) {
         console.error("Error fetching subscription:", error);
       }
@@ -298,6 +306,8 @@ function UserDashboard() {
                 type="number"
                 id="amount"
                 name="amount"
+                value={buyAmt}
+                onChange={(e) => setBuyAmt(e.target.value)}
                 placeholder="Enter amount"
                 required
                 disabled={false}
@@ -409,6 +419,20 @@ function UserDashboard() {
             </div>
           </div>
         </div>
+
+        {/* Payment Modal */}
+        <PaymentModal
+          isOpen={isOpen}
+          closeModal={closeModal}
+          paymentData={{
+            amount: buyAmt,
+            currency: buyCurrency,
+            description: "Buy Xcoin",
+            from: "",
+          }}
+          setAmount={setBuyAmt}
+          setCurrency={setBuyCurrency}
+        />
       </main>
     </div>
   );

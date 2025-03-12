@@ -12,6 +12,7 @@ import TransactionHistoryPage from "./pages/TransactionHistory";
 import ProfilePage from "./pages/UserProfile";
 import ProtectedWrapper from "./utils/ProtectedWrapper";
 import Spinner from "./components/Spinner";
+import PaymentProcessing from "./pages/PaymentProcessing";
 
 const AppRoutes: React.FC = () => {
   return (
@@ -56,6 +57,14 @@ const AppRoutes: React.FC = () => {
         element={
           <ProtectedWrapper>
             <ProfilePage />
+          </ProtectedWrapper>
+        }
+      />
+      <Route
+        path="/payment"
+        element={
+          <ProtectedWrapper>
+            <PaymentProcessing />
           </ProtectedWrapper>
         }
       />

@@ -50,6 +50,12 @@ export interface UserProfile {
   };
 }
 
+export interface UserMin {
+  email: string;
+  fullName: string;
+  id: string;
+}
+
 export interface ExhangeRateType {
   RMB: number;
   XAF: number;
@@ -83,4 +89,39 @@ export interface Card {
   subscriptionType: "standard" | "premium" | "business";
   isEpired?: boolean;
   rate: number;
+}
+
+export interface PaymentData {
+  amount: string;
+  currency?: string; // USD, EUR, GBP, etc.
+  description?: string;
+  external_reference?: string;
+  from?: string;
+}
+
+export interface PaymentModalType {
+  isOpen: boolean;
+  closeModal: () => void;
+  paymentData: PaymentData;
+  setPhone?: (phone: string) => void;
+  setAmount: (amount: string) => void;
+  setCurrency: (currency: string) => void;
+}
+
+// Define interfaces for the encrypted response
+export interface EncryptedResponse {
+  encrypted: boolean;
+  iv: string;
+  data: string;
+  tag: string;
+  timestamp: number;
+  error?: string;
+}
+
+export interface EncryptedData {
+  encrypted: boolean;
+  iv: string;
+  data: string;
+  tag?: string;
+  timestamp: number;
 }

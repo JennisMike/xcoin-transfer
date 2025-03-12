@@ -2,6 +2,7 @@ const express = require("express");
 const { v4: uuidv4 } = require("uuid");
 const Transaction = require("../models/transaction");
 const { Op } = require("sequelize");
+const { encryptResponse } = require("../services/crypto");
 
 const router = express.Router();
 
@@ -47,7 +48,7 @@ router.post("/create", async (req, res) => {
       description,
     });
 
-    res.status(201).json(transaction);
+    return res.status(201).json(encryptResponse(transaction));
   } catch (error) {
     res
       .status(500)
@@ -76,7 +77,7 @@ router.get("/:id", async (req, res) => {
       return res.status(404).json({ error: "Transaction not found" });
     }
 
-    res.json(transaction);
+    return res.status(200).json(encryptResponse(transaction));
   } catch (error) {
     res
       .status(500)
@@ -96,7 +97,7 @@ router.put("/:id", async (req, res) => {
 
     await transaction.update({ status });
 
-    res.json(transaction);
+    return res.json(encryptResponse(transaction));
   } catch (error) {
     res
       .status(500)
@@ -113,7 +114,7 @@ router.delete("/:id", async (req, res) => {
     }
 
     await transaction.destroy();
-    res.json({ message: "Transaction deleted successfully" });
+    return res.json({ message: "Transaction deleted successfully" });
   } catch (error) {
     res
       .status(500)

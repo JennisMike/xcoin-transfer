@@ -7,6 +7,8 @@ const router = express.Router();
 const { body, validationResult } = require("express-validator");
 const Subscription = require("../models/subscription");
 const LoginAttempt = require("../models/loginAttempts");
+const { encryptResponse } = require("../services/crypto");
+const getClientIpAddress = require("../services/getClientIPAddress");
 
 router.post(
   "/register",
@@ -87,13 +89,10 @@ router.post(
   }
 );
 
-const getIpAddress = (req) =>
-  req.ip || req.headers["x-forwarded-for"] || req.connection.remoteAddress;
-
 router.post("/login", async (req, res) => {
   try {
     const { email, password } = req.body;
-    const ipAddress = getIpAddress(req);
+    const ipAddress = getClientIpAddress(req);
     if (!email || !password) {
       return res.status(400).json({ error: "Email and password are required" });
     }
@@ -169,8 +168,10 @@ router.get("/profile", async (req, res) => {
 });
 
 router.get("/verify", (req, res) => {
+  const data = { user: req.session.user };
+
   if (req.session && req.session.user) {
-    return res.status(200).json({ user: req.session.user });
+    return res.status(200).json(encryptResponse(data));
   }
   res.status(401).json({ error: "Unauthorized" });
 });
@@ -179,7 +180,7 @@ router.get("/verify", (req, res) => {
 router.post("/logout", (req, res) => {
   req.session.destroy((err) => {
     if (err) return res.status(500).json({ error: "Logout failed" });
-    res.clearCookie("connect.sid");
+    res.clearCookie("xc_session");
     res.status(200).json({ message: "Logged out successfully" });
   });
 });

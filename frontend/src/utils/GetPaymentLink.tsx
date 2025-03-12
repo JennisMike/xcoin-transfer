@@ -1,4 +1,5 @@
 import axios, { AxiosError } from "axios";
+import { decryptData, isEncryptedResponse } from "./CryptoService";
 
 async function getPaymentLink({
   amount,
@@ -26,8 +27,12 @@ async function getPaymentLink({
     );
 
     console.log("Payment link:", response.data);
-    sessionStorage.setItem("transactionId", response.data.transaction.id);
-    return response.data.link;
+    if (isEncryptedResponse(response.data)) {
+      const decryptedData: { transaction: { id: string }; link: string } =
+        await decryptData(response.data);
+      sessionStorage.setItem("transactionId", decryptedData.transaction.id);
+      return decryptedData.link;
+    }
   } catch (error: unknown) {
     console.error(
       "Error fetching payment link:",

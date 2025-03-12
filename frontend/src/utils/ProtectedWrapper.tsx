@@ -3,6 +3,7 @@ import { Navigate } from "react-router-dom";
 import axios from "axios";
 import { ProtectedWrapperProps } from "./types";
 import Spinner from "../components/Spinner";
+import { decryptData, isEncryptedResponse } from "./CryptoService";
 
 const ProtectedWrapper: React.FC<ProtectedWrapperProps> = ({ children }) => {
   const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
@@ -14,7 +15,11 @@ const ProtectedWrapper: React.FC<ProtectedWrapperProps> = ({ children }) => {
         const response = await axios.get(url, {
           withCredentials: true,
         });
-        setIsAuthenticated(!!response.data.user);
+        if (isEncryptedResponse(response.data)) {
+          const user = await decryptData(response.data);
+          console.log(user);
+          setIsAuthenticated(!!user);
+        }
       } catch {
         setIsAuthenticated(false);
       }

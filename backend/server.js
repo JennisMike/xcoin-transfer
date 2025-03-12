@@ -37,12 +37,13 @@ app.use(cors(corsOptions));
 // Set up session middleware
 app.use(
   session({
+    name: "xc_session",
     store: new SQLiteStore({ db: "services/database.sqlite", dir: "./" }),
     secret: process.env.SESSION_SECRET || "somesecretkey",
     resave: false,
     saveUninitialized: false,
     cookie: {
-      secure: false,
+      secure: process.env.NODE_ENV === "production",
       maxAge: 1000 * 60 * 60 * 4, // 4 hours
     },
   })
@@ -54,7 +55,7 @@ app.use("/api/transactions", transactionRoutes);
 app.use("/api/subscriptions", subscriptionRoutes);
 app.use("/api/payments", paymentRoutes);
 
-app.get("/", (req, res) => {
+app.get("/api", (req, res) => {
   res.json({ message: "Url is working well" });
 });
 

@@ -1,3 +1,5 @@
+const crypto = require("crypto");
+
 const isAuthenticated = (req, res, next) => {
   if (req.session.user) {
     next();
@@ -8,8 +10,8 @@ const isAuthenticated = (req, res, next) => {
 
 function generatePaymentReference() {
   const timestamp = Date.now();
-  const randomNum = Math.floor(Math.random() * 10000); 
-  return `PAY${timestamp}${randomNum}`; 
+  const randomNum = Math.floor(Math.random() * 10000);
+  return `PAY${timestamp}${randomNum}`;
 }
 
 module.exports = { isAuthenticated, generatePaymentReference };

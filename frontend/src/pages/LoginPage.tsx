@@ -7,6 +7,7 @@ import { Alert, AlertDescription } from "../components/ui/alert";
 import { Link, useNavigate } from "react-router-dom";
 import { LoginFormInputs } from "../utils/types";
 import axios, { AxiosError } from "axios";
+import getUser from "../utils/GetUser";
 
 // Validation schema using Yup
 const schema = yup.object().shape({
@@ -42,6 +43,7 @@ const LoginPage = () => {
         withCredentials: true,
       });
       console.log("Logged in successfully:", response.data);
+      await getUser();
       setError(null);
       navigate("/dashboard");
     } catch (error) {

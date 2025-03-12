@@ -42,10 +42,14 @@ const Transaction = sequelize.define(
       type: DataTypes.ENUM("completed", "pending", "failed", "processing"),
       defaultValue: "pending",
     },
-    reference: {
+    external_reference: {
       type: DataTypes.STRING,
       unique: true,
       allowNull: false,
+    },
+    reference: {
+      type: DataTypes.STRING,
+      allowNull: true,
     },
     description: {
       type: DataTypes.STRING,

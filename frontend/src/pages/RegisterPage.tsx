@@ -16,6 +16,7 @@ import {
 import { motion } from "framer-motion";
 import { RegisterFormInputs } from "../utils/types";
 import { useNavigate } from "react-router-dom";
+import getUser from "../utils/GetUser";
 
 // Validation schema using Yup
 const schema = yup.object().shape({
@@ -70,6 +71,7 @@ const RegisterPage = () => {
       const response = await axios.post(url, data);
       // await createSubscription();
       console.log("Registration successful:", response.data);
+      await getUser();
       navigate("/dashboard");
     } catch (error) {
       if (

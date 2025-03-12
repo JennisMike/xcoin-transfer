@@ -2,6 +2,7 @@ const express = require("express");
 const Subscription = require("../models/subscription"); // Adjust path as needed
 const dayjs = require("dayjs");
 const Transaction = require("../models/transaction");
+const { encryptResponse } = require("../services/crypto");
 
 const router = express.Router();
 
@@ -50,9 +51,9 @@ router.post("/create", async (req, res) => {
       status: "active",
     });
 
-    res.status(201).json(subscription);
+    return res.status(201).json(encryptResponse(subscription));
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    return res.status(500).json({ error: error.message });
   }
 });
 
@@ -67,7 +68,7 @@ router.get("/", async (req, res) => {
     if (!subscription) {
       return res.status(404).json({ error: "Subscription not found" });
     }
-    res.json(subscription);
+    return res.json(encryptResponse(subscription));
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
@@ -95,9 +96,9 @@ router.patch("/status", async (req, res) => {
       subscription.status = "expired";
       await subscription.save();
     }
-    res.json(subscription);
+    return res.json(encryptResponse(subscription));
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    return res.status(500).json({ error: error.message });
   }
 });
 
@@ -125,9 +126,9 @@ router.patch("/renew", async (req, res) => {
     subscription.paymentDetails = paymentDetails;
     await subscription.save();
 
-    res.json(subscription);
+    return res.json(encryptResponse(subscription));
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    return res.status(500).json({ error: error.message });
   }
 });
 
@@ -167,9 +168,9 @@ router.patch("/upgrade", async (req, res) => {
     }
 
     await subscription.save();
-    res.json(subscription);
+    return res.json(encryptResponse(subscription));
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    return res.status(500).json({ error: error.message });
   }
 });
 
@@ -187,9 +188,9 @@ router.delete("/cancel", async (req, res) => {
 
     subscription.status = "expired";
     await subscription.save();
-    res.json({ message: "Subscription canceled successfully" });
+    return res.json({ message: "Subscription canceled successfully" });
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    return res.status(500).json({ error: error.message });
   }
 });
 
@@ -211,7 +212,6 @@ router.put("/add-money", async (req, res) => {
 
     subscription.balance += amount;
     await subscription.save();
-    res.json(subscription);
     console.log("Subscription balance updated successfully", subscription);
     const transaction = await Transaction.create({
       type: "buy",
@@ -222,11 +222,10 @@ router.put("/add-money", async (req, res) => {
       description: "Buying Xcoin",
       userId: id,
     });
-
     console.log("Transaction created:", transaction);
-    res.json(transaction);
+    return res.json(encryptResponse(transaction));
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    return res.status(500).json({ error: error.message });
   }
 });
 

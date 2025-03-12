@@ -3,6 +3,7 @@ import Sidebar from "../components/Sidebar";
 import { UserProfile } from "../utils/types";
 import { mockProfile } from "../utils/data";
 import axios from "axios";
+import { decryptData, isEncryptedResponse } from "../utils/CryptoService";
 
 function ProfilePage() {
   const [profile, setProfile] = useState<UserProfile | null>(null);
@@ -20,7 +21,11 @@ function ProfilePage() {
       const url = `${import.meta.env.VITE_ROOT_URL}/auth/profile`;
       try {
         const response = await axios.get(url, { withCredentials: true });
-        console.log(response.data);
+
+        if (isEncryptedResponse(response.data)) {
+          const decryptedData = await decryptData(response.data);
+          console.log(decryptedData);
+        }
         setTimeout(() => {
           setProfile(mockProfile);
           setFormData(mockProfile);
