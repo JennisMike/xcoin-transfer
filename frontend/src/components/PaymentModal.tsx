@@ -9,7 +9,7 @@ const PaymentModal = ({
   closeModal,
   paymentData,
   setAmount,
-  setCurrency,
+  setCurrency = () => {},
 }: PaymentModalType) => {
   const navigate = useNavigate();
   const [phone, setPhone] = useState("");
@@ -41,12 +41,13 @@ const PaymentModal = ({
     event.preventDefault();
 
     let data;
+    const phoneNum = paymentData.from || phone;
     try {
       const response = await axios.post(
         `${import.meta.env.VITE_ROOT_URL}/payments/pay`,
         {
           ...paymentData,
-          from: phone,
+          from: phoneNum,
         },
         {
           headers: {
@@ -58,8 +59,9 @@ const PaymentModal = ({
       console.log("Payment Successful", response.data.data);
       if (isEncryptedResponse(response.data)) {
         data = await decryptData(response.data);
+      } else {
+        data = await response.data;
       }
-      data = response.data;
     } catch (error) {
       if (error instanceof AxiosError) {
         console.error("Error: ", error.response?.data);
@@ -117,7 +119,7 @@ const PaymentModal = ({
               type="text"
               required
               minLength={8}
-              value={phone}
+              value={paymentData.from || phone}
               onChange={(e) => setPhone(e.target.value)}
               className="w-full p-2 border rounded-md"
             />

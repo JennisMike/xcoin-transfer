@@ -224,7 +224,7 @@ function ConvertXcoinPage() {
                       title="destCurrency"
                       value={toCurrency}
                       onChange={handleToCurrencyChange}
-                      className="w-20 px-4 py-3 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
+                      className="min-w-20 px-4 py-3 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 "
                     >
                       <option value="rmb">RMB</option>
                       <option value="fcfa">FCFA</option>
