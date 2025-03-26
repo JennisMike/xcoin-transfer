@@ -122,4 +122,68 @@ router.delete("/:id", async (req, res) => {
   }
 });
 
+router.post("/request", async (req, res) => {
+  try {
+    // Get the user from the session
+    const user = req.session.user;
+    if (!user) {
+      return res.status(401).json({ error: "Unauthorized" });
+    }
+
+    // Retrieve the user's subscription record
+    const subscription = await Subscription.findOne({
+      where: { userId: user.id },
+    });
+    if (!subscription) {
+      return res.status(404).json({ error: "Subscription not found" });
+    }
+
+    const { amount, fromCurrency, toCurrency, convertedAmount } = req.body;
+
+    // Validate the required fields
+    if (
+      amount === undefined ||
+      !fromCurrency ||
+      !toCurrency ||
+      convertedAmount === undefined
+    ) {
+      return res.status(400).json({ error: "Missing required fields" });
+    }
+
+    const conversionAmount = parseFloat(amount);
+    if (subscription.balance < conversionAmount) {
+      return res.status(400).json({ error: "Insufficient balance" });
+    }
+
+    // Deduct the conversion amount from the user's balance
+    subscription.balance -= conversionAmount;
+    await subscription.save();
+
+    // Generate a unique external reference
+    const externalReference = uuidv4();
+
+    // Calculate fee if applicable. Adjust the fee logic as needed.
+    const fee = subscription.fee || 0;
+
+    // Create a new conversion transaction record
+    const transaction = await Transaction.create({
+      type: "request",
+      amount: conversionAmount, // XCoin amount to be converted
+      currency: fromCurrency,
+      targetAmount: convertedAmount,
+      targetCurrency: toCurrency,
+      fee: fee,
+      status: "pending",
+      external_reference: externalReference,
+      description: "XCoin conversion",
+      userId: user.id,
+    });
+
+    res.status(200).json({ transaction, newBalance: subscription.balance });
+  } catch (error) {
+    console.error("Error during conversion:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
 module.exports = router;

@@ -1,9 +1,9 @@
 import React, { useState, useRef, useEffect } from "react";
-import { Avatar, AvatarImage, AvatarFallback } from "../components/ui/avatar";
-import DefaultProfile from "../assets/profile.png";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
+import DefaultProfile from "@/assets/profile.png";
 import { ChevronDown, LogOut } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { UserProfile } from "../utils/types";
+import { UserProfile } from "@/utils/types";
 
 const Header: React.FC = () => {
   const [isDropdownOpen, setIsDropdownOpen] = useState<boolean>(false);

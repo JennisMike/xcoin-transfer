@@ -1,5 +1,5 @@
 import axios, { AxiosError } from "axios";
-import { decryptData, isEncryptedResponse } from "./CryptoService";
+import { decryptData, isEncryptedResponse } from "@/utils/CryptoService";
 
 async function getPaymentLink({
   amount,

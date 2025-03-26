@@ -2,7 +2,7 @@ const { DataTypes } = require("sequelize");
 const { sequelize } = require("../services/db");
 const User = require("./user");
 
-const Subscription = sequelize.define("Subscription", {
+const Subscription = sequelize.define("subscription", {
   userId: {
     type: DataTypes.UUID,
     allowNull: false,

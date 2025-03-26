@@ -1,8 +1,8 @@
 import axios from "axios";
 import React, { useEffect, useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
-import getToken from "../utils/GetCampayToken";
-import { decryptData, isEncryptedResponse } from "../utils/CryptoService";
+import getToken from "@/utils/GetCampayToken";
+import { decryptData, isEncryptedResponse } from "@/utils/CryptoService";
 
 const PaymentProcessing: React.FC = () => {
   const [status, setStatus] = useState<string>("pending");

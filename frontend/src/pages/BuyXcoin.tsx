@@ -1,9 +1,9 @@
 import { useState } from "react";
-import Sidebar from "../components/Sidebar";
 import { useNavigate } from "react-router-dom";
-import useModal from "../components/UseModal";
-import PaymentModal from "../components/PaymentModal";
-import getToken from "../utils/GetCampayToken";
+import Sidebar from "@/components/Sidebar";
+import useModal from "@/components/UseModal";
+import PaymentModal from "@/components/PaymentModal";
+import getToken from "@/utils/GetCampayToken";
 
 // Custom country code selector component
 function CountryCodeSelector({

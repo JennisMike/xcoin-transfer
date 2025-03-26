@@ -1,8 +1,8 @@
 import { MouseEvent, useEffect, useState } from "react";
-import { PaymentModalType } from "../utils/types";
+import { PaymentModalType } from "@/utils/types";
 import axios, { AxiosError } from "axios";
 import { useNavigate } from "react-router-dom";
-import { decryptData, isEncryptedResponse } from "../utils/CryptoService";
+import { decryptData, isEncryptedResponse } from "@/utils/CryptoService";
 
 const PaymentModal = ({
   isOpen,

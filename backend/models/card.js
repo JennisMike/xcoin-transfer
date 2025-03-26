@@ -2,7 +2,7 @@ const { DataTypes } = require("sequelize");
 const { sequelize } = require("../services/db");
 
 const Card = sequelize.define(
-  "Card",
+  "card",
   {
     id: {
       type: DataTypes.UUID,
@@ -18,6 +18,7 @@ const Card = sequelize.define(
     type: {
       type: DataTypes.ENUM("standard", "premium", "business"),
       allowNull: false,
+      unique: true,
     },
     // The rate associated with this card (could represent interest, cashback, or exchange rate)
     rate: {

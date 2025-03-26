@@ -11,8 +11,12 @@ import ConvertXcoinPage from "./pages/ConvertXcoin";
 import TransactionHistoryPage from "./pages/TransactionHistory";
 import ProfilePage from "./pages/UserProfile";
 import ProtectedWrapper from "./utils/ProtectedWrapper";
-import Spinner from "./components/Spinner";
 import PaymentProcessing from "./pages/PaymentProcessing";
+// import AdminDashboard from "./pages/Admin/DashboardTest1";
+import AdminLogin from "./pages/Admin/AdminLogin";
+import AdminDashboard from "./pages/Admin/AdminDashboard";
+import TransactionDetail from "./pages/Admin/TransactionDetail";
+import DashboardTest from "./pages/Admin/DashboardTest";
 
 const AppRoutes: React.FC = () => {
   return (
@@ -68,7 +72,33 @@ const AppRoutes: React.FC = () => {
           </ProtectedWrapper>
         }
       />
-      <Route path="/spinner" element={<Spinner />}></Route>
+      <Route path="/admin">
+        <Route path="/admin/login" element={<AdminLogin />} />
+        <Route
+          path="/admin/dashboard"
+          element={
+            <ProtectedWrapper isAdmin>
+              <AdminDashboard />
+            </ProtectedWrapper>
+          }
+        />
+        <Route
+          path="/admin/transaction/:id"
+          element={
+            <ProtectedWrapper isAdmin>
+              <TransactionDetail />
+            </ProtectedWrapper>
+          }
+        />
+        <Route
+          path="/admin/test"
+          element={
+            <ProtectedWrapper isAdmin>
+              <DashboardTest />
+            </ProtectedWrapper>
+          }
+        />
+      </Route>
       <Route path="*" element={<NotFound />} />
     </Routes>
   );

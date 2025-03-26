@@ -3,11 +3,11 @@ import { useForm } from "react-hook-form";
 import { yupResolver } from "@hookform/resolvers/yup";
 import * as yup from "yup";
 import { Eye, EyeOff, Lock, Mail } from "lucide-react";
-import { Alert, AlertDescription } from "../components/ui/alert";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Link, useNavigate } from "react-router-dom";
-import { LoginFormInputs } from "../utils/types";
+import { LoginFormInputs } from "@/utils/types";
 import axios, { AxiosError } from "axios";
-import getUser from "../utils/GetUser";
+import getUser from "@/utils/GetUser";
 
 // Validation schema using Yup
 const schema = yup.object().shape({
