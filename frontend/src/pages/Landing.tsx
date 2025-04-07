@@ -1,11 +1,11 @@
-import HeroSection from "../components/Home//HeroSection";
-import FeatureSection from "../components/Home/FeatureSection";
-import CalculatorSection from "../components/Home/CalculatorSection";
-import Header from "../components/Home/Header";
-import Footer from "../components/Footer";
-import HowItWorks from "../components/Home/HowItWorks";
-import PricingSection from "../components/Home/PricingSection";
-import ContactSection from "../components/Home/ContactSection";
+import HeroSection from "@/components/Home//HeroSection";
+import FeatureSection from "@/components/Home/FeatureSection";
+import CalculatorSection from "@/components/Home/CalculatorSection";
+import Header from "@/components/Home/Header";
+import Footer from "@/components/Footer";
+import HowItWorks from "@/components/Home/HowItWorks";
+import PricingSection from "@/components/Home/PricingSection";
+import ContactSection from "@/components/Home/ContactSection";
 
 const LandingPage = () => {
   return (

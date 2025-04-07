@@ -4,6 +4,7 @@ const userRoutes = require("./routes/authRoutes");
 const transactionRoutes = require("./routes/transactionRoutes");
 const subscriptionRoutes = require("./routes/subscriptionRoutes");
 const paymentRoutes = require("./routes/paymentRoutes");
+const adminRoutes = require("./routes/adminRoutes");
 require("dotenv").config();
 const cors = require("cors");
 const session = require("express-session");
@@ -55,6 +56,7 @@ app.use("/api/auth", userRoutes);
 app.use("/api/transactions", transactionRoutes);
 app.use("/api/subscriptions", subscriptionRoutes);
 app.use("/api/payments", paymentRoutes);
+app.use("/api/admin", adminRoutes);
 
 app.get("/api", (req, res) => {
   res.json({ message: "Url is working well" });

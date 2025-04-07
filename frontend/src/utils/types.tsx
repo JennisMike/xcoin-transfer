@@ -71,6 +71,7 @@ export interface ContactFormData {
 
 export interface ProtectedWrapperProps {
   children: React.ReactNode;
+  isAdmin?: boolean;
 }
 
 export interface Subscription {
@@ -125,3 +126,30 @@ export interface EncryptedData {
   tag?: string;
   timestamp: number;
 }
+
+export interface TransferRequest {
+  id: string;
+  userId: string;
+  username: string;
+  email: string;
+  amount: number;
+  xCoinAmount: number;
+  rmbAmount: number;
+  exchangeRate: number;
+  status: "pending" | "approved" | "declined";
+  timestamp: Date;
+  paymentMethod: string;
+}
+
+export type XcoinRequest = {
+  rmbAmount: number;
+  timestamp: string | number | Date;
+  email: string;
+  username: string;
+  id: string;
+  date: string;
+  reference?: string;
+  amount: number;
+  type: "Premium" | "Standard" | "Business";
+  status: "pending" | "completed";
+};

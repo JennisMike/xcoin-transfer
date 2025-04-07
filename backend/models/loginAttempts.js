@@ -2,7 +2,7 @@ const { sequelize } = require("../services/db");
 const { DataTypes } = require("sequelize");
 
 const LoginAttempt = sequelize.define(
-  "LoginAttempt",
+  "loginAttempt",
   {
     id: {
       type: DataTypes.UUID,

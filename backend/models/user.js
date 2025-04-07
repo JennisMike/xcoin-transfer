@@ -3,12 +3,16 @@ const { sequelize } = require("../services/db");
 const Card = require("./card");
 
 const User = sequelize.define(
-  "User",
+  "user",
   {
     id: {
       type: DataTypes.UUID,
       defaultValue: DataTypes.UUIDV4,
       primaryKey: true,
+    },
+    role: {
+      type: DataTypes.ENUM("admin", "client"),
+      defaultValue: "client",
     },
     fullName: {
       type: DataTypes.STRING,
@@ -53,7 +57,7 @@ const User = sequelize.define(
       defaultValue: DataTypes.NOW,
     },
     verificationLevel: {
-      type: DataTypes.ENUM("unverified", "basic", "intermediate", "advanced"),
+      type: DataTypes.ENUM("unverified", "verified"),
       defaultValue: "unverified",
     },
     avatarUrl: {

@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
-import Sidebar from "../components/Sidebar";
+import Sidebar from "@/components/Sidebar";
+import axios from "axios";
 
 // I added this to handle drag n drop of QR code image but later didn't use it.
 // import { useDropzone } from "react";
@@ -86,24 +87,52 @@ function ConvertXcoinPage() {
     setAmount(value);
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setIsLoading(true);
-    // TODO: Make API Call
-    setTimeout(() => {
-      setIsLoading(false);
-      setShowConfirmation(true);
-      const newConversion: Conversion = {
-        id: recentConversions.length + 1,
-        date: new Date().toISOString().split("T")[0],
-        fromAmount: parseFloat(amount),
-        fromCurrency: "XCoin",
-        toAmount: convertedAmount,
-        toCurrency: getCurrencyName(toCurrency),
-        status: "Completed",
-      };
-      setRecentConversions([newConversion, ...recentConversions]);
-    }, 1500);
+
+    const form = e.currentTarget;
+    const destCurrency = (
+      form.elements.namedItem("destCurrency") as HTMLInputElement
+    ).value;
+
+    if (destCurrency == "FCFA") {
+      const url = import.meta.env.VITE_ROOT_URL;
+      try {
+        // API call with conversion details in the request body.
+        const response = await axios.post(
+          `${url}/transaction/request`,
+          {
+            amount: parseFloat(amount),
+            fromCurrency: "XCoin",
+            toCurrency: toCurrency,
+            convertedAmount: convertedAmount,
+          },
+          { withCredentials: true }
+        );
+        if (import.meta.env.DEV) {
+          console.log("API Response:", response.data);
+        }
+
+        // Assuming the API returns a status field, you can use it.
+        const newConversion: Conversion = {
+          id: recentConversions.length + 1,
+          date: new Date().toISOString().split("T")[0],
+          fromAmount: parseFloat(amount),
+          fromCurrency: "XCoin",
+          toAmount: convertedAmount,
+          toCurrency: getCurrencyName(toCurrency),
+          status: response.data.status || "Completed",
+        };
+        setRecentConversions([newConversion, ...recentConversions]);
+        setShowConfirmation(true);
+      } catch (error) {
+        console.error("Conversion failed", error);
+        // Optionally, set an error state here to display an error message.
+      } finally {
+        setIsLoading(false);
+      }
+    }
   };
 
   const getCurrencyName = (code: string): string => {
@@ -224,7 +253,7 @@ function ConvertXcoinPage() {
                       title="destCurrency"
                       value={toCurrency}
                       onChange={handleToCurrencyChange}
-                      className="w-20 px-4 py-3 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
+                      className="min-w-20 px-4 py-3 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 "
                     >
                       <option value="rmb">RMB</option>
                       <option value="fcfa">FCFA</option>

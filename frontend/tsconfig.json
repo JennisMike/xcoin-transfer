@@ -6,10 +6,12 @@
   ],
   "compilerOptions": {
     "forceConsistentCasingInFileNames": true,
+    "target": "esnext",
+    "module": "esnext",
     "strict": true,
-    "baseUrl": ".",
+    "baseUrl": "./",
     "paths": {
-      "@/*": ["./src/*"]
+      "@/*": ["src/*"]
     }
   }
 }

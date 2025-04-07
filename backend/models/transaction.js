@@ -3,7 +3,7 @@ const { sequelize } = require("../services/db");
 const User = require("./user");
 
 const Transaction = sequelize.define(
-  "Transaction",
+  "transaction",
   {
     id: {
       type: DataTypes.UUID,
@@ -15,7 +15,14 @@ const Transaction = sequelize.define(
       defaultValue: DataTypes.NOW,
     },
     type: {
-      type: DataTypes.ENUM("buy", "sell", "convert", "deposit", "withdraw"),
+      type: DataTypes.ENUM(
+        "buy",
+        "sell",
+        "convert",
+        "deposit",
+        "withdraw",
+        "request"
+      ),
       allowNull: false,
     },
     amount: {

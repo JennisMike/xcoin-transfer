@@ -20,6 +20,9 @@ const createRedisClient = () => {
   });
 };
 
+/**
+ * @param redis
+ */
 let redis;
 
 try {
@@ -27,8 +30,6 @@ try {
   console.log("Connected to Redis successfully.");
 } catch (error) {
   console.error("Failed to connect to Redis. Using fallback Redis server...");
-
-  // Fallback connection
   redis = new Redis({
     host: "3.236.245.162", // Fallback Redis server
     port: 6379,
@@ -51,7 +52,7 @@ router.post("/token", async (req, res) => {
   try {
     // Check if token is already cached
     const cachedToken = await redis.get("campay_token");
-    if (cachedToken) {
+    if (cachedToken || !cachedToken == null) {
       console.log("Returning cached token");
       return res.json({ token: cachedToken });
     }
@@ -182,7 +183,7 @@ router.get("/status/:ref", async (req, res) => {
     }
 
     // Check if we already know the final status
-    if (["SUCCESS", "FAILED"].includes(transaction.status)) {
+    if (["SUCCESSFUL", "FAILED"].includes(transaction.status)) {
       return res.json({ status: transaction.status });
     }
 
@@ -203,7 +204,7 @@ router.get("/status/:ref", async (req, res) => {
     transaction.status = response.data.status;
     await transaction.save();
 
-    if (transaction.status === "SUCESS") {
+    if (transaction.status.includes("SUCCESS")) {
       const subscription = await Subscription.findOne({
         where: { userId: transaction.userId },
       });
@@ -219,7 +220,7 @@ router.get("/status/:ref", async (req, res) => {
       `Payment status for ${req.params.ref}: ${response.data.status}`
     );
 
-    res.json(response.data);
+    return res.json(response.data);
   } catch (error) {
     console.error(
       `Payment status check failed for ${req.params.ref}:`,
@@ -230,7 +231,7 @@ router.get("/status/:ref", async (req, res) => {
     const errorMessage =
       error.response?.data?.error || error.message || "Internal Server Error";
 
-    res.status(statusCode).json({
+    return res.status(statusCode).json({
       error: errorMessage,
       reference: req.params.ref,
     });

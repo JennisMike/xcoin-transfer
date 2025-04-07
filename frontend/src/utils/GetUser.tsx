@@ -1,6 +1,6 @@
 import axios from "axios";
-import { UserMin } from "./types";
-import { decryptData, isEncryptedResponse } from "./CryptoService";
+import { UserMin } from "@/utils/types";
+import { decryptData, isEncryptedResponse } from "@/utils/CryptoService";
 
 const getUser = async (): Promise<UserMin | null> => {
   const url = `${import.meta.env.VITE_ROOT_URL}/auth/verify`;

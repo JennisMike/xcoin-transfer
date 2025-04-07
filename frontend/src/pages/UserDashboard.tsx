@@ -154,24 +154,41 @@ function UserDashboard() {
       return;
     }
 
-    try {
-      const url = `${import.meta.env.VITE_ROOT_URL}/convert`;
+    const form = event.currentTarget;
+    const destCurrency = (
+      form.elements.namedItem("destCurrency") as HTMLInputElement
+    ).value;
 
-      const response = await axios.post(url, amount, { withCredentials: true });
+    console.log(destCurrency);
 
-      if (response.status >= 300) {
-        throw new Error("Conversion failed. Please try again.");
-      }
+    if (destCurrency == "FCFA") {
+      try {
+        const url = `${import.meta.env.VITE_ROOT_URL}/transactions/request`;
 
-      if (isEncryptedResponse(response.data)) {
-        const data: { convertedAmount: number } = await decryptData(
-          response.data
+        const response = await axios.post(
+          url,
+          {
+            convertedAmount: amount,
+            fromCurrency: "Xcoin",
+            toCurrency: "FCFA",
+          },
+          { withCredentials: true }
         );
-        setRmbValue(data.convertedAmount);
+
+        if (response.status >= 300) {
+          throw new Error("Conversion failed. Please try again.");
+        }
+
+        if (isEncryptedResponse(response.data)) {
+          const data: { convertedAmount: number } = await decryptData(
+            response.data
+          );
+          setRmbValue(data.convertedAmount);
+        }
+      } catch (error) {
+        console.error("Error converting currency:", error);
+        alert("Something went wrong. Please try again.");
       }
-    } catch (error) {
-      console.error("Error converting currency:", error);
-      alert("Something went wrong. Please try again.");
     }
   };
 
@@ -240,7 +257,7 @@ function UserDashboard() {
               </h3>
               <select
                 title="destCurrency"
-                name="dest-currency"
+                name="destCurrency"
                 id="destCurrency"
                 onChange={(e) => setCurrency(e.target.value)}
                 className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500"

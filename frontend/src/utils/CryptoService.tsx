@@ -1,4 +1,4 @@
-import { EncryptedData, EncryptedResponse } from "./types";
+import { EncryptedData, EncryptedResponse } from "@/utils/types";
 
 /**
  * Custom error class for crypto-related errors

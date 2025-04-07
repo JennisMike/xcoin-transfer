@@ -1,9 +1,61 @@
 import { useState } from "react";
-import Sidebar from "../components/Sidebar";
 import { useNavigate } from "react-router-dom";
+import Sidebar from "@/components/Sidebar";
+import useModal from "@/components/UseModal";
+import PaymentModal from "@/components/PaymentModal";
+import getToken from "@/utils/GetCampayToken";
+
+// Custom country code selector component
+function CountryCodeSelector({
+  value,
+  onChange,
+}: {
+  value: string;
+  onChange: (code: string) => void;
+}) {
+  const [isOpen, setIsOpen] = useState(false);
+  const options = [
+    // TODO: Add more countries and their codes here
+    { code: "237", country: "Cameroon" },
+    // { code: "234", country: "Nigeria" },
+  ];
+
+  const handleSelect = (code: string) => {
+    onChange(code);
+    setIsOpen(false);
+  };
+
+  return (
+    <div className="relative">
+      <button
+        type="button"
+        className="w-full text-left px-4 py-3 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+        onClick={() => setIsOpen(!isOpen)}
+      >
+        +{value}
+      </button>
+      {isOpen && (
+        <ul className="absolute z-20 mt-1 w-[11em] bg-white border border-gray-300 rounded-md shadow-lg">
+          {options.map((option) => (
+            <li
+              key={option.code}
+              onClick={() => handleSelect(option.code)}
+              className="cursor-pointer px-4 py-2 hover:bg-gray-100"
+            >
+              {option.country} (+{option.code})
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
+  );
+}
 
 function BuyXcoinPage() {
   const navigate = useNavigate();
+  const { isOpen, openModal, closeModal } = useModal();
+  const [phoneNum, setPhoneNum] = useState("");
+  const [countryCode, setCountryCode] = useState("237"); // Default: Cameroon
   const [amount, setAmount] = useState("");
   const [paymentMethod, setPaymentMethod] = useState("momo");
   const [rmbEquivalent, setRmbEquivalent] = useState(0);
@@ -12,7 +64,6 @@ function BuyXcoinPage() {
 
   const handleAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const xcoinAmount = parseFloat(e.target.value);
-
     if (!isNaN(xcoinAmount)) {
       setAmount(e.target.value);
       setRmbEquivalent(xcoinAmount * 7);
@@ -22,21 +73,41 @@ function BuyXcoinPage() {
     }
   };
 
+  const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setPhoneNum(e.target.value);
+  };
+
   const handlePaymentMethodChange = (
     e: React.ChangeEvent<HTMLSelectElement>
   ) => {
     setPaymentMethod(e.target.value);
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setIsLoading(true);
+
+    // Merge country code (without '+') with phone number
+    const mergedPhoneNumber = countryCode + phoneNum;
+    console.log("Merged Phone Number:", mergedPhoneNumber);
 
     // Simulate API call
     setTimeout(() => {
       setIsLoading(false);
       setShowConfirmation(true);
     }, 1500);
+
+    const form = e.currentTarget;
+    const accountType = (form.elements.namedItem("method") as HTMLInputElement)
+      .value;
+
+    if (
+      accountType.toLowerCase().includes("momo") ||
+      accountType.toLowerCase().includes("orange")
+    ) {
+      getToken();
+      openModal();
+    }
   };
 
   return (
@@ -132,32 +203,40 @@ function BuyXcoinPage() {
                   >
                     <option value="momo">MTN Mobile Money</option>
                     <option value="orange">Orange Money</option>
-                    <option value="bankTransfer" disabled>Bank Transfer</option>
+                    <option value="bankTransfer" disabled>
+                      Bank Transfer
+                    </option>
                     <option value="alipay">Alipay</option>
                     <option value="wechat">WeChat Pay</option>
                   </select>
                 </div>
 
-                {paymentMethod === "momo" && (
+                {paymentMethod !== "alipay" && (
                   <div>
                     <label
                       htmlFor="phoneNumber"
                       className="block text-sm font-medium text-gray-700 mb-2"
                     >
-                      Mobile Money Number
+                      {paymentMethod.toUpperCase()} Number
                     </label>
-                    <input
-                      type="tel"
-                      id="phoneNumber"
-                      name="phoneNumber"
-                      placeholder="Enter your mobile number"
-                      pattern="\d{9,9}"
-                      minLength={9}
-                      maxLength={9}
-                      title="Number should be at least 9 digits"
-                      className="w-full px-4 py-3 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
-                      required
-                    />
+                    <div className="flex space-x-2">
+                      <CountryCodeSelector
+                        value={countryCode}
+                        onChange={setCountryCode}
+                      />
+                      <input
+                        type="tel"
+                        id="phoneNumber"
+                        name="phoneNumber"
+                        placeholder="Enter your mobile number"
+                        minLength={9}
+                        maxLength={15}
+                        onChange={handlePhoneChange}
+                        title="Number should be at least 9 digits"
+                        className="w-full px-4 py-3 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                        required
+                      />
+                    </div>
                   </div>
                 )}
 
@@ -316,6 +395,19 @@ function BuyXcoinPage() {
               </button>
             </div>
           </div>
+
+          <PaymentModal
+            isOpen={isOpen}
+            closeModal={closeModal}
+            paymentData={{
+              amount: amount,
+              currency: "XAF",
+              description: "Buy Xcoin",
+              from: countryCode + phoneNum,
+            }}
+            setAmount={setAmount}
+            setCurrency={() => "XAF"}
+          />
         </div>
       </main>
     </div>

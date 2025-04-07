@@ -1,6 +1,6 @@
 import React from "react";
-import { WalletProps } from "../utils/types";
-import { subscriptionStyles } from "../utils/data";
+import { WalletProps } from "@/utils/types";
+import { subscriptionStyles } from "@/utils/data";
 
 const WalletBalanceCard: React.FC<WalletProps> = ({
   balance,
