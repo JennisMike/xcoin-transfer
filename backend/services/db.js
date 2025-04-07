@@ -1,3 +1,4 @@
+require("dotenv").config();
 const { Sequelize } = require("sequelize");
 const path = require("path");
 
@@ -9,6 +10,8 @@ const dbHost = process.env.DB_HOST || "localhost"; // For MySQL/Postgres
 const dbUsername = process.env.DB_USERNAME || "root"; // For MySQL/Postgres
 const dbPassword = process.env.DB_PASSWORD || "password"; // For MySQL/Postgres
 const dbName = process.env.DB_NAME || "mydatabase"; // For MySQL/Postgres
+const dbPort = process.env.DB_PORT || 5432;
+const useSSL = process.env.DB_SSL === "true";
 
 let sequelize;
 
@@ -25,6 +28,14 @@ if (dbDialect === "sqlite") {
     host: dbHost,
     dialect: dbDialect,
     logging: false,
+    dialectOptions: useSSL
+      ? {
+          ssl: {
+            require: true,
+            rejectUnauthorized: false,
+          },
+        }
+      : {},
   });
 }
 
@@ -32,10 +43,10 @@ if (dbDialect === "sqlite") {
 sequelize
   .authenticate()
   .then(() => {
-    console.log("Connection has been established successfully.");
+    console.log("✅ Connection has been established successfully.");
   })
   .catch((err) => {
-    console.error("Unable to connect to the database:", err);
+    console.error("❌ Unable to connect to the database:", err);
   });
 
 const connectDB = async () => {

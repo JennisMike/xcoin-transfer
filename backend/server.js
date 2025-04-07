@@ -27,6 +27,7 @@ const corsOptions = {
   optionsSuccessStatus: 200, // For legacy browser support (optional)
 };
 
+
 // Sync models with the database.
 sequelize.sync({ alter: false }).then(() => {
   console.log("Database synced successfully!");
