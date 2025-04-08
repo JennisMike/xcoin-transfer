@@ -1,7 +1,7 @@
 const express = require("express");
 const { v4: uuidv4 } = require("uuid");
 const Transaction = require("../models/transaction");
-const { Op } = require("sequelize");
+const { Op, where } = require("sequelize");
 const { encryptResponse } = require("../services/crypto");
 const Subscription = require("../models/subscription");
 
@@ -59,8 +59,14 @@ router.post("/create", async (req, res) => {
 
 // Get all transactions
 router.get("/", async (req, res) => {
+  if (!req.session.user) {
+    return res.status(401).json({ Error: "Unauthorized" });
+  }
+
   try {
-    const transactions = await Transaction.findAll();
+    const transactions = await Transaction.findAll({
+      where: { userId: req.session.user.id },
+    });
     res.json(transactions);
   } catch (error) {
     res

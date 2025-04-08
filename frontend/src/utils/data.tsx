@@ -192,6 +192,9 @@ export const transfers: TransferRequest[] = [
     status: "pending",
     timestamp: new Date(2025, 2, 22, 14, 30),
     paymentMethod: "Mobile Money",
+    targetAmount: 0,
+    targetCurrency: "RMB",
+    createdAt: new Date(),
   },
   {
     id: "TRX-002",
@@ -205,6 +208,9 @@ export const transfers: TransferRequest[] = [
     status: "pending",
     timestamp: new Date(2025, 2, 23, 9, 15),
     paymentMethod: "Bank Transfer",
+    targetAmount: 0,
+    targetCurrency: "XAF",
+    createdAt: new Date(),
   },
   {
     id: "TRX-003",
@@ -218,6 +224,9 @@ export const transfers: TransferRequest[] = [
     status: "approved",
     timestamp: new Date(2025, 2, 21, 16, 45),
     paymentMethod: "Mobile Money",
+    targetAmount: 0,
+    targetCurrency: "RMB",
+    createdAt: new Date(),
   },
   {
     id: "TRX-004",
@@ -231,6 +240,9 @@ export const transfers: TransferRequest[] = [
     status: "declined",
     timestamp: new Date(2025, 2, 20, 11, 20),
     paymentMethod: "Bank Transfer",
+    targetAmount: 0,
+    targetCurrency: "XAF",
+    createdAt: new Date(),
   },
 ];
 

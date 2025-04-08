@@ -1,9 +1,9 @@
 import { useState, useEffect, useCallback } from "react";
 import Sidebar from "../components/Sidebar";
 import { Transaction } from "@/utils/types";
-import { mockTransactions } from "@/utils/data";
 import { ArrowLeft } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import axios from "axios";
 
 function TransactionHistoryPage() {
   const navigate = useNavigate();
@@ -111,11 +111,15 @@ function TransactionHistoryPage() {
   useEffect(() => {
     const fetchTransactions = async () => {
       setIsLoading(true);
-      // Mock data - in a real app, this would be an API call
+
+      const url = `${import.meta.env}/transactions`;
+      const response = await axios.get(url, { withCredentials: true });
+
+      const transactions = response.data;
 
       setTimeout(() => {
-        setTransactions(mockTransactions);
-        setTotalTransactions(mockTransactions.length);
+        setTransactions(transactions);
+        setTotalTransactions(transactions.length);
         applyFilters();
         setIsLoading(false);
       }, 1000);
