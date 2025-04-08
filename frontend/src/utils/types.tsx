@@ -128,6 +128,7 @@ export interface EncryptedData {
 }
 
 export interface TransferRequest {
+  timestamp: Date;
   id: string;
   userId: string;
   username: string;
