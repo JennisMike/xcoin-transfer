@@ -62,6 +62,14 @@ const Transaction = sequelize.define(
       type: DataTypes.STRING,
       allowNull: true,
     },
+    phone: {
+      type: DataTypes.STRING,
+      allowNull: true,
+    },
+    username: {
+      type: DataTypes.STRING,
+      allowNull: true,
+    },
   },
   {
     timestamps: true,

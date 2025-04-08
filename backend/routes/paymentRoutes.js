@@ -6,6 +6,10 @@ const { generatePaymentReference } = require("../services/utils");
 const Transaction = require("../models/transaction");
 const Subscription = require("../models/subscription");
 const { encryptResponse } = require("../services/crypto");
+const { v4: uuidv4 } = require("uuid");
+require("dotenv").config();
+
+const EXCHANGE_API = "https://api.exchangerate-api.com/v4/latest/USD";
 
 // Function to create Redis client
 const createRedisClient = () => {
@@ -30,11 +34,6 @@ try {
   console.log("Connected to Redis successfully.");
 } catch (error) {
   console.error("Failed to connect to Redis. Using fallback Redis server...");
-  redis = new Redis({
-    host: "3.236.245.162", // Fallback Redis server
-    port: 6379,
-    password: "adminpass123",
-  });
 }
 
 router.post("/token", async (req, res) => {
@@ -332,6 +331,12 @@ router.post("/pay", async (req, res) => {
         .json({ success: false, message: "Description is required." });
     }
 
+    const subscription = await Subscription.findOne({
+      where: { userId: req.session.user.id },
+    });
+
+    console.log(subscription);
+
     // Payment provider API request
     const paymentAPIUrl = `${process.env.CAMPAY_BASE_URL}/api/collect/`;
 
@@ -354,7 +359,9 @@ router.post("/pay", async (req, res) => {
             "Content-Type": "application/json",
           },
         });
-        console.log("Response:", response.data);
+        if (process.env.NODE_ENV.includes("dev")) {
+          console.log("Response:", response.data);
+        }
 
         const transaction = await Transaction.create({
           type: "deposit",
@@ -389,6 +396,166 @@ router.post("/pay", async (req, res) => {
     return res.status(500).json({
       success: false,
       message: error.response?.data?.message || "Payment processing failed",
+    });
+  }
+});
+
+router.post("/campay/withdraw", async (req, res) => {
+  const { amount, to, description } = req.body;
+
+  if (!req.session.user) {
+    return res.status(401).json({ Error: "Unauthorized" });
+  }
+
+  const token = await redis.get("campay_token");
+
+  // Validate input
+  if (!amount || isNaN(amount) || amount <= 0) {
+    return res.status(400).json({ error: "Invalid amount" });
+  }
+  if (!to || !/^\d+$/.test(to)) {
+    return res.status(400).json({ error: "Invalid phone number" });
+  }
+  if (!description || description.trim() === "") {
+    return res.status(400).json({ error: "Description is required" });
+  }
+
+  const reference = uuidv4();
+
+  try {
+    console.log(amount, Math.round(parseFloat(amount)));
+    const response = await axios.post(
+      `${process.env.CAMPAY_BASE_URL}/api/withdraw/`,
+      {
+        // username: process.env.CAMPAY_APP_USERNAME,
+        // password: process.env.CAMPAY_APP_PASSWORD,
+        amount: Math.round(parseFloat(amount)),
+        to: parseInt(to),
+        description,
+        external_reference: reference,
+      },
+      {
+        headers: {
+          Authorization: `Token ${token}`,
+          "Content-Type": "application/json",
+        },
+      }
+    );
+
+    res.json({
+      success: true,
+      message: "Withdrawal request sent",
+      data: response.data,
+    });
+  } catch (error) {
+    console.error("Withdrawal error:", error.response?.data || error.message);
+    res.status(500).json({
+      error: "Failed to process withdrawal",
+      details: error.response?.data || error.message,
+    });
+  }
+});
+
+router.get("/data/rates", async (req, res) => {
+  if (!req.session.user) {
+    return res.status(401).json({ error: "You are not authorized" });
+  }
+
+  try {
+    // Check if exchange rates are already cached
+    const cachedData = await redis.get("exchange_rates");
+    let exchangeRates;
+    let needsFresh = true;
+    let lastUpdated;
+
+    if (cachedData) {
+      const cachedObj = JSON.parse(cachedData);
+      exchangeRates = cachedObj.rates;
+
+      // Check if we need to refresh the data based on timestamp
+      lastUpdated = cachedObj.time_last_updated;
+      const currentTime = Math.floor(Date.now() / 1000); // Current time in Unix timestamp (seconds)
+
+      // If the data is less than 24 hours old, use the cached data
+      if (lastUpdated && currentTime - lastUpdated < 86400) {
+        needsFresh = false;
+      }
+    }
+
+    if (needsFresh) {
+      // Fetch new exchange rates from API
+      const response = await axios.get(EXCHANGE_API);
+      exchangeRates = response.data.rates;
+      lastUpdated =
+        response.data.time_last_updated || Math.floor(Date.now() / 1000);
+
+      // Store both rates and timestamp in Redis with a 24-hour expiration
+      const dataToCache = {
+        rates: exchangeRates,
+        time_last_updated: lastUpdated,
+      };
+
+      await redis.set(
+        "exchange_rates",
+        JSON.stringify(dataToCache),
+        "EX",
+        86400
+      );
+    }
+
+    // Define the base value of XCoin in USD
+    const xcoinToUsd = 0.74;
+
+    if (exchangeRates && exchangeRates.USD) {
+      // Create the expected format: { xcoin: { rmb: value, fcfa: value, usd: value } }
+      const xcoinRates = {
+        xcoin: {
+          // For RMB (Chinese Yuan/CNY)
+          rmb: parseFloat(
+            (xcoinToUsd * (exchangeRates.CNY || exchangeRates.RMB)).toFixed(2)
+          ),
+
+          // For FCFA (CFA Franc/XOF)
+          fcfa: parseFloat(
+            (xcoinToUsd * (exchangeRates.XOF || exchangeRates.FCFA)).toFixed(2)
+          ),
+
+          // Direct USD value
+          usd: xcoinToUsd,
+        },
+      };
+
+      return res.json({
+        rates: xcoinRates,
+        lastUpdated,
+      });
+    } else {
+      // If the API doesn't provide USD as base or we don't have rates,
+      // we need to handle this case with hardcoded default rates
+      return res.json({
+        rates: {
+          xcoin: {
+            rmb: 5.42,
+            fcfa: 467.52,
+            usd: 0.74,
+          },
+        },
+        lastUpdated,
+      });
+    }
+  } catch (error) {
+    console.log("Exchange rate error:", error);
+    // Return default fallback rates in case of any error
+    return res.status(500).json({
+      error: "Error fetching exchange rate",
+      rates: {
+        xcoin: {
+          rmb: 5.42,
+          fcfa: 467.52,
+          usd: 0.74,
+        },
+      },
+      lastUpdated: Math.floor(Date.now() / 1000),
     });
   }
 });

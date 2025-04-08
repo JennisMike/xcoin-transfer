@@ -55,15 +55,23 @@ const PaymentProcessing: React.FC = () => {
         if (isEncryptedResponse(response.data)) {
           const data: { status: string } = await decryptData(response.data);
 
-          if (data.status === "FAILED" || data.status === "SUCCESS") {
+          console.log("Status is: ", data.status);
+
+          if (
+            data.status.toLowerCase().includes("failed") ||
+            data.status.toLowerCase().includes("sucess")
+          ) {
             setStatus(data.status.toLowerCase());
             sessionStorage.removeItem("reference");
           }
+        } else {
+          setStatus(response.data.status.toLowerCase());
         }
       } catch (error) {
         console.error("Error checking transaction status:", error);
         setErrorMessage("Failed to check transaction status");
       }
+      console.log("Checking transaction status...", status);
     };
 
     // Initial check
@@ -82,7 +90,7 @@ const PaymentProcessing: React.FC = () => {
 
   // Navigate to dashboard after a successful transaction
   useEffect(() => {
-    if (status === "SUCCESS") {
+    if (status.toLowerCase() === "success") {
       const timer = setTimeout(() => {
         navigate("/dashboard");
       }, 2000); // Display the tick for 2 seconds
@@ -97,7 +105,7 @@ const PaymentProcessing: React.FC = () => {
       intervalRef.current = null;
     }
     setCancelled(true);
-    setStatus("CANCELLED");
+    setStatus("cancelled");
 
     // Use timeout to give user time to read the message before navigating
     setTimeout(() => {

@@ -97,7 +97,7 @@ const PaymentModal = ({
 
   return (
     <div className="flex flex-col items-center justify-center fixed inset-0">
-      <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center">
+      <div className="fixed inset-0 backdrop-blur-sm bg-opacity-50 flex justify-center items-center">
         <div className="bg-white p-6 rounded-lg shadow-lg w-96">
           <h2 className="text-xl font-bold mb-4">Confirm Payment</h2>
           <div className="space-y-3">

@@ -135,9 +135,11 @@ export interface TransferRequest {
   amount: number;
   xCoinAmount: number;
   rmbAmount: number;
+  targetAmount: number;
+  targetCurrency: string;
   exchangeRate: number;
   status: "pending" | "approved" | "declined";
-  timestamp: Date;
+  createdAt: Date;
   paymentMethod: string;
 }
 
@@ -153,3 +155,15 @@ export type XcoinRequest = {
   type: "Premium" | "Standard" | "Business";
   status: "pending" | "completed";
 };
+
+export interface ConvertXcoinModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  onConfirm: (data: {
+    username?: string;
+    amount: number;
+    phone?: string;
+  }) => void;
+  destinationCurrency: string;
+  amount: number;
+}

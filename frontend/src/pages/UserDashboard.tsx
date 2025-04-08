@@ -8,12 +8,13 @@ import getToken from "../utils/GetCampayToken";
 import PaymentModal from "../components/PaymentModal";
 import useModal from "../components/UseModal";
 import { decryptData, isEncryptedResponse } from "../utils/CryptoService";
+import ConvertXcoinModal from "@/components/ConvertXcoinModal";
 
 function UserDashboard() {
   // For the wallet conversion functionality
   const [rmbValue, setRmbValue] = useState(0);
   const { isOpen, openModal, closeModal } = useModal();
-  const [currency, setCurrency] = useState("XAF");
+  const [currency, setCurrency] = useState("fcfa");
   const [amount, setAmount] = useState("");
   const [buyAmt, setBuyAmt] = useState("");
   const [buyCurrency, setBuyCurrency] = useState("");
@@ -21,7 +22,14 @@ function UserDashboard() {
   const [cardDetails, setCardDetails] = useState<Card>({
     balance: 0,
     subscriptionType: "standard",
-    rate: 10.5,
+    rate: 0,
+  });
+
+  // Store rates for different currencies
+  const [rates, setRates] = useState<Record<string, number>>({
+    fcfa: 0,
+    rmb: 0,
+    usd: 0,
   });
 
   const sortedTransactions = transactions
@@ -30,6 +38,7 @@ function UserDashboard() {
 
   const limitedTransactions = sortedTransactions?.slice(0, 3);
 
+  // Fetch transactions
   useEffect(() => {
     const fetchTransactions = async () => {
       try {
@@ -42,17 +51,43 @@ function UserDashboard() {
           setTransactions(response.data);
         }
       } catch (error) {
-        console.log(error);
+        console.error("Error fetching transactions:", error);
       }
     };
     fetchTransactions();
   }, []);
 
+  // Fetch rates for different currencies
+  useEffect(() => {
+    const fetchRates = async () => {
+      try {
+        const url = `${import.meta.env.VITE_ROOT_URL}/payments/data/rates`;
+        const response = await axios.get(url, { withCredentials: true });
+
+        let ratesData;
+        if (isEncryptedResponse(response.data)) {
+          ratesData = await decryptData(response.data);
+        } else {
+          ratesData = response.data;
+        }
+
+        setRates(ratesData.rates.xcoin || { fcfa: 550, rmb: 10.5, usd: 0.74 });
+      } catch (error) {
+        console.error("Error fetching rates:", error);
+        // Set fallback rates
+        setRates({ fcfa: 550, rmb: 10.5 });
+      }
+    };
+    fetchRates();
+  }, []);
+
+  // Fetch subscription data
   useEffect(() => {
     const fetchSubscription = async () => {
-      const url = `${import.meta.env.VITE_ROOT_URL}/subscriptions`;
       try {
+        const url = `${import.meta.env.VITE_ROOT_URL}/subscriptions`;
         const response = await axios.get(url, { withCredentials: true });
+
         if (isEncryptedResponse(response.data)) {
           const decryptedData: Card = await decryptData(response.data);
           setCardDetails(decryptedData);
@@ -60,51 +95,83 @@ function UserDashboard() {
           setCardDetails(response.data);
         }
       } catch (error) {
-        console.log(error);
+        console.error("Error fetching subscription:", error);
       }
     };
+
     fetchSubscription();
   }, []);
 
-  // const checkPaymentStatus = async (paymentId: string) => {
-  //   try {
-  //     const url = `${
-  //       import.meta.env.VITE_ROOT_URL
-  //     }/payments/status/${paymentId}`;
-  //     const response = await axios.get(url, { withCredentials: true });
-  //     console.log(response.data);
+  // Update conversion value when amount or currency changes
+  useEffect(() => {
+    const xcoinAmount = parseFloat(amount);
+    if (!isNaN(xcoinAmount) && rates[currency]) {
+      setRmbValue(xcoinAmount * rates[currency]);
+    } else {
+      setRmbValue(0);
+    }
+  }, [amount, currency, rates]);
 
-  //     if (response.data.status === "success") {
-  //       alert("Payment successful!");
-  //       await axios.post(
-  //         `${import.meta.env.VITE_ROOT_URL}/subscriptions/add-money`,
-  //         {
-  //           amount: 5,
-  //           targetAmount: 5 * cardDetails.rate,
-  //           status: "success",
-  //         }
-  //       );
-  //     }
-  //   } catch (error) {
-  //     console.error(
-  //       "Error fetching payment status:",
-  //       error instanceof AxiosError ? error.message : String(error)
-  //     );
-  //   }
-  // };
+  const handleConvertConfirm = (data: {
+    username?: string;
+    amount: number;
+    phone?: string;
+  }) => {
+    // Prepare API call data based on destination currency
+    const conversionData =
+      currency === "fcfa"
+        ? {
+            convertedAmount: data.amount,
+            phoneNum: data.phone,
+            toCurrency: currency,
+            fromCurrency: "Xcoin",
+            amount: parseFloat(amount),
+          }
+        : {
+            convertedAmount: data.amount,
+            username: data.username,
+            toCurrency: currency,
+            fromCurrency: "Xcoin",
+            amount: parseFloat(amount),
+          };
 
-  // ✅ Extracted function for polling until the window closes
-  // const waitForWindowClose = (
-  //   paymentWindow: Window | null,
-  //   paymentId: string
-  // ) => {
-  //   const interval = setInterval(() => {
-  //     if (paymentWindow && paymentWindow.closed) {
-  //       clearInterval(interval); // Stop checking
-  //       checkPaymentStatus(paymentId); // ✅ Check status after window closes
-  //     }
-  //   }, 1000); // Check every second
-  // };
+    axios
+      .post(
+        `${import.meta.env.VITE_ROOT_URL}/transactions/request`,
+        conversionData,
+        {
+          withCredentials: true,
+        }
+      )
+      .then((response) => {
+        // Show success message
+        console.log(response);
+        if (currency === "fcfa") {
+          alert(
+            `Successfully converted ${data.amount} XCoin to ${currency} for phone ${data.phone}`
+          );
+        } else {
+          alert(
+            `Successfully converted ${data.amount} XCoin to ${currency} for user ${data.username}`
+          );
+        }
+      })
+      .catch((error) => {
+        console.error("Conversion failed:", error);
+        alert("Failed to process conversion. Please try again.");
+      })
+      .finally(() => {
+        // Close the modal regardless of outcome
+        setShowConvertModal(false);
+      });
+  };
+
+  const handleAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    setAmount(value);
+  };
+
+  const [showConvertModal, setShowConvertModal] = useState<boolean>(false);
 
   const handleBuyXcoin = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -122,85 +189,45 @@ function UserDashboard() {
       await getToken();
       setBuyAmt(amount);
       setBuyCurrency("XAF");
+    } else if (accountType.toLowerCase().includes("wechat")) {
+      console.log("Alipay/WeChat selected");
+      // Handle WeChat payment flow
+      setBuyAmt(amount);
+      setBuyCurrency("RMB");
+      // Implement WeChat specific payment flow here
     }
   };
 
-  const handleAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const xcoin = parseFloat(e.target.value);
-    if (!isNaN(xcoin)) {
-      setAmount(e.target.value);
-      setRmbValue(xcoin * cardDetails.rate);
-    } else {
-      setAmount("");
-      setRmbValue(0);
-    }
-  };
-
-  // Subscription state fetched from the backend
-  // For a free "standard" plan, we no longer use a trial period.
+  // Subscription state
   const [subscription, setSubscription] = useState<Subscription | null>({
     type: "standard",
-    trialEnd: null, // not needed for a free plan
+    trialEnd: null,
   });
 
-  // we compare the current time with trialEnd.
   const [isExpired, setIsExpired] = useState(false);
 
   const changeCurrency = async (event: React.FormEvent<HTMLFormElement>) => {
-    event.preventDefault(); // Prevent page reload
+    event.preventDefault();
 
-    if (!amount || parseInt(amount) <= 0) {
+    if (!amount || parseFloat(amount) <= 0) {
       alert("Please enter a valid amount.");
       return;
     }
 
-    const form = event.currentTarget;
-    const destCurrency = (
-      form.elements.namedItem("destCurrency") as HTMLInputElement
-    ).value;
-
-    console.log(destCurrency);
-
-    if (destCurrency == "FCFA") {
-      try {
-        const url = `${import.meta.env.VITE_ROOT_URL}/transactions/request`;
-
-        const response = await axios.post(
-          url,
-          {
-            convertedAmount: amount,
-            fromCurrency: "Xcoin",
-            toCurrency: "FCFA",
-          },
-          { withCredentials: true }
-        );
-
-        if (response.status >= 300) {
-          throw new Error("Conversion failed. Please try again.");
-        }
-
-        if (isEncryptedResponse(response.data)) {
-          const data: { convertedAmount: number } = await decryptData(
-            response.data
-          );
-          setRmbValue(data.convertedAmount);
-        }
-      } catch (error) {
-        console.error("Error converting currency:", error);
-        alert("Something went wrong. Please try again.");
-      }
-    }
+    setShowConvertModal(true);
   };
 
-  // Fetch subscription data from the backend
+  // Fetch subscription status
   useEffect(() => {
-    async function fetchSubscription() {
+    const fetchSubscriptionStatus = async () => {
       try {
         const url = `${import.meta.env.VITE_ROOT_URL}/subscriptions`;
         const response = await axios.get(url, { withCredentials: true });
+
         if (response.status >= 300) {
           throw new Error("Failed to fetch subscription");
         }
+
         if (isEncryptedResponse(response.data)) {
           const data: { type: string; trialEnd?: string } = await decryptData(
             response.data
@@ -209,28 +236,33 @@ function UserDashboard() {
             type: data.type,
             trialEnd: data.trialEnd ? new Date(data.trialEnd) : null,
           });
+        } else {
+          const data = response.data;
+          setSubscription({
+            type: data.type,
+            trialEnd: data.trialEnd ? new Date(data.trialEnd) : null,
+          });
         }
       } catch (error) {
-        console.error("Error fetching subscription:", error);
+        console.error("Error fetching subscription status:", error);
       }
-    }
-    fetchSubscription();
+    };
+
+    fetchSubscriptionStatus();
   }, []);
 
-  // For non-standard plans, check if the subscription (or trial period) is expired.
+  // Check if subscription is expired
   useEffect(() => {
     if (subscription?.type !== "standard" && subscription?.trialEnd) {
       const now = new Date();
       setIsExpired(now > subscription.trialEnd);
     } else {
-      // "Standard" is free and does not expire.
       setIsExpired(false);
     }
   }, [subscription]);
 
-  // Dummy handler for payment/upgrade action
   const handleUpgrade = () => {
-    // TODO: Integrate with your payment gateway or upgrade flow here.
+    // Implement upgrade flow
     alert("Redirecting to payment/upgrade flow...");
   };
 
@@ -259,11 +291,12 @@ function UserDashboard() {
                 title="destCurrency"
                 name="destCurrency"
                 id="destCurrency"
-                onChange={(e) => setCurrency(e.target.value)}
+                value={currency}
+                onChange={(e) => setCurrency(e.target.value.toLowerCase())}
                 className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
               >
-                <option value="CFA">FCFA</option>
-                <option value="RMB">RMB</option>
+                <option value="fcfa">FCFA</option>
+                <option value="rmb">RMB</option>
               </select>
             </div>
 
@@ -279,13 +312,15 @@ function UserDashboard() {
                 id="amount"
                 name="amount"
                 placeholder="Enter amount"
+                value={amount}
                 onChange={handleAmountChange}
                 min={0}
                 required
                 className="w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
               />
               <p className="text-gray-700">
-                Equivalent in {currency}: <strong>{rmbValue}</strong>
+                Equivalent in {currency.toUpperCase()}:{" "}
+                <strong>{rmbValue.toFixed(2)}</strong>
               </p>
               <button
                 type="submit"
@@ -327,7 +362,6 @@ function UserDashboard() {
                 onChange={(e) => setBuyAmt(e.target.value)}
                 placeholder="Enter amount"
                 required
-                disabled={false}
                 className="w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
               />
               <button
@@ -371,6 +405,13 @@ function UserDashboard() {
                     </td>
                   </tr>
                 ))}
+                {!limitedTransactions?.length && (
+                  <tr>
+                    <td colSpan={4} className="p-3 text-center text-gray-500">
+                      No transaction history available
+                    </td>
+                  </tr>
+                )}
               </tbody>
             </table>
           </div>
@@ -395,7 +436,6 @@ function UserDashboard() {
                   setSubscription({
                     ...subscription,
                     type: newType,
-                    // For non-standard plans, set a trial period; standard remains free.
                     trialEnd:
                       newType === "standard"
                         ? null
@@ -416,13 +456,6 @@ function UserDashboard() {
                   <p className="text-green-600">
                     Enjoy your {subscription.type} plan!
                   </p>
-                  {/* <button
-                    type="button"
-                    onClick={handleUpgrade}
-                    className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-md font-medium w-full shadow-md mt-2"
-                  >
-                    Upgrade Now
-                  </button> */}
                 </div>
               ) : (
                 <button
@@ -436,6 +469,14 @@ function UserDashboard() {
             </div>
           </div>
         </div>
+
+        <ConvertXcoinModal
+          isOpen={showConvertModal}
+          onClose={() => setShowConvertModal(false)}
+          onConfirm={handleConvertConfirm}
+          destinationCurrency={currency}
+          amount={parseFloat(amount)}
+        />
 
         {/* Payment Modal */}
         <PaymentModal

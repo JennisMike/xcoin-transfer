@@ -14,7 +14,7 @@ function Sidebar() {
   const [isOpen, setIsOpen] = useState(false);
 
   return (
-    <>
+    <div className="z-50">
       {/* Mobile Toggle Button */}
       <button
         type="button"
@@ -86,7 +86,7 @@ function Sidebar() {
           onClick={() => setIsOpen(false)}
         ></div>
       )}
-    </>
+    </div>
   );
 }
 

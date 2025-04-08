@@ -4,8 +4,7 @@ const path = require("path");
 
 // Define your environment variables
 const dbDialect = process.env.DB_DIALECT || "sqlite";
-const dbStorage =
-  process.env.DB_STORAGE || path.join(__dirname, "database.sqlite");
+const dbStorage = path.join(__dirname, "database.sqlite");
 const dbHost = process.env.DB_HOST || "localhost"; // For MySQL/Postgres
 const dbUsername = process.env.DB_USERNAME || "root"; // For MySQL/Postgres
 const dbPassword = process.env.DB_PASSWORD || "password"; // For MySQL/Postgres
@@ -38,16 +37,6 @@ if (dbDialect === "sqlite") {
       : {},
   });
 }
-
-// Test the connection (optional)
-sequelize
-  .authenticate()
-  .then(() => {
-    console.log("✅ Connection has been established successfully.");
-  })
-  .catch((err) => {
-    console.error("❌ Unable to connect to the database:", err);
-  });
 
 const connectDB = async () => {
   try {

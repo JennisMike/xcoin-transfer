@@ -25,7 +25,7 @@ const WalletBalanceCard: React.FC<WalletProps> = ({
       <div className="text-4xl font-bold mt-2">{balance} XCoin</div>
 
       {/* Expiry Message */}
-      {subscriptionType !== "standard" && isExpired && (
+      {subscriptionType.toLowerCase() !== "standard" && isExpired && (
         <p className="mt-4 text-yellow-300">
           Your trial has ended. Please upgrade or pay to continue enjoying your
           wallet features.

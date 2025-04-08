@@ -51,6 +51,7 @@ const AdminDashboard: React.FC = () => {
           : response.data;
 
       setTransferRequests(data);
+      console.log(data);
       setFilteredRequests(data);
     } catch (error) {
       console.error("Error fetching transfer requests:", error);
@@ -87,21 +88,21 @@ const AdminDashboard: React.FC = () => {
     // Filter by date range
     if (dateFrom) {
       filtered = filtered.filter(
-        (request) => new Date(request.timestamp) >= new Date(dateFrom)
+        (request) => new Date(request.createdAt) >= new Date(dateFrom)
       );
     }
 
     if (dateTo) {
       filtered = filtered.filter(
-        (request) => new Date(request.timestamp) <= new Date(dateTo)
+        (request) => new Date(request.createdAt) <= new Date(dateTo)
       );
     }
 
     // Sort
     const sorted = filtered.sort((a, b) => {
       return sortBy === "amount"
-        ? a.rmbAmount - b.rmbAmount
-        : new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime();
+        ? a.amount - b.amount
+        : new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
     });
 
     setFilteredRequests(sorted);
@@ -187,9 +188,9 @@ const AdminDashboard: React.FC = () => {
 
     filteredRequests.forEach((request) => {
       const row = [
-        formatDate(request.timestamp),
+        formatDate(request.createdAt),
         request.id,
-        request.rmbAmount.toString(),
+        request.amount.toString(),
         request.username,
         request.status,
       ];
@@ -236,6 +237,7 @@ const AdminDashboard: React.FC = () => {
             <h2 className="text-xl font-semibold">Money Transfer Requests</h2>
             <div className="flex space-x-4">
               <button
+                type="button"
                 onClick={handleExportCSV}
                 className="flex items-center px-4 py-2 bg-gray-100 rounded-md hover:bg-gray-200"
               >
@@ -357,14 +359,15 @@ const AdminDashboard: React.FC = () => {
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="text-sm text-gray-900">
-                          {request.xCoinAmount} XCoin
+                          {request.amount} XCoin
                         </div>
                         <div className="text-sm text-gray-500">
-                          ≈ {request.rmbAmount} RMB
+                          ≈ {request.targetAmount}{" "}
+                          {request.targetCurrency.toUpperCase()}
                         </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        {formatDate(request.timestamp)}
+                        {formatDate(request.createdAt)}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <span
@@ -381,12 +384,14 @@ const AdminDashboard: React.FC = () => {
                           {request.status === "pending" && (
                             <>
                               <button
+                                type="button"
                                 onClick={() => handleApprove(request.id)}
                                 className="text-green-600 hover:text-green-900"
                               >
                                 <Check size={18} />
                               </button>
                               <button
+                                type="button"
                                 onClick={() => handleDecline(request.id)}
                                 className="text-red-600 hover:text-red-900"
                               >
@@ -428,7 +433,7 @@ const AdminDashboard: React.FC = () => {
                   transferRequests.filter(
                     (r) =>
                       r.status === "approved" &&
-                      new Date(r.timestamp).toDateString() ===
+                      new Date(r.createdAt).toDateString() ===
                         new Date().toDateString()
                   ).length
                 }
@@ -443,7 +448,7 @@ const AdminDashboard: React.FC = () => {
                   .filter(
                     (r) =>
                       r.status === "approved" &&
-                      new Date(r.timestamp).toDateString() ===
+                      new Date(r.createdAt).toDateString() ===
                         new Date().toDateString()
                   )
                   .reduce((sum, r) => sum + r.rmbAmount, 0)
@@ -461,6 +466,7 @@ const AdminDashboard: React.FC = () => {
             <div className="flex justify-between items-start mb-4">
               <h3 className="text-xl font-bold">Transfer Request Details</h3>
               <button
+                type="button"
                 onClick={() => setShowModal(false)}
                 className="text-gray-500 hover:text-gray-700"
               >
@@ -499,7 +505,7 @@ const AdminDashboard: React.FC = () => {
               <div>
                 <p className="text-sm text-gray-500">Date & Time</p>
                 <p className="font-medium">
-                  {formatDate(selectedRequest.timestamp)}
+                  {formatDate(selectedRequest.createdAt)}
                 </p>
               </div>
               <div>
@@ -535,6 +541,7 @@ const AdminDashboard: React.FC = () => {
 
             <div className="flex justify-end space-x-3">
               <button
+                type="button"
                 onClick={() => setShowModal(false)}
                 className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 bg-white hover:bg-gray-50"
               >
@@ -544,12 +551,14 @@ const AdminDashboard: React.FC = () => {
               {selectedRequest.status === "pending" && (
                 <>
                   <button
+                    type="button"
                     onClick={() => handleDecline(selectedRequest.id)}
                     className="px-4 py-2 border border-red-300 rounded-md text-red-700 bg-red-50 hover:bg-red-100"
                   >
                     Decline
                   </button>
                   <button
+                    type="button"
                     onClick={() => handleApprove(selectedRequest.id)}
                     className="px-4 py-2 bg-green-600 rounded-md text-white hover:bg-green-700"
                   >
@@ -559,7 +568,10 @@ const AdminDashboard: React.FC = () => {
               )}
 
               {selectedRequest.status === "approved" && (
-                <button className="px-4 py-2 bg-blue-600 rounded-md text-white hover:bg-blue-700">
+                <button
+                  type="button"
+                  className="px-4 py-2 bg-blue-600 rounded-md text-white hover:bg-blue-700"
+                >
                   <Download size={16} className="inline mr-1 -mt-1" />
                   Download Receipt
                 </button>

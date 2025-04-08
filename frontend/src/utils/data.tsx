@@ -245,7 +245,7 @@ export const sampleTransactions: XcoinRequest[] = [
     rmbAmount: 0,
     timestamp: "",
     email: "",
-    username: "",
+    username: "Zeng Chi",
   },
   {
     id: "TXN12346",

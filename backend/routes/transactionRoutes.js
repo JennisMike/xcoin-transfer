@@ -3,6 +3,7 @@ const { v4: uuidv4 } = require("uuid");
 const Transaction = require("../models/transaction");
 const { Op } = require("sequelize");
 const { encryptResponse } = require("../services/crypto");
+const Subscription = require("../models/subscription");
 
 const router = express.Router();
 
@@ -138,7 +139,14 @@ router.post("/request", async (req, res) => {
       return res.status(404).json({ error: "Subscription not found" });
     }
 
-    const { amount, fromCurrency, toCurrency, convertedAmount } = req.body;
+    const {
+      amount,
+      fromCurrency,
+      toCurrency,
+      convertedAmount,
+      username,
+      phoneNum,
+    } = req.body;
 
     // Validate the required fields
     if (
@@ -150,7 +158,11 @@ router.post("/request", async (req, res) => {
       return res.status(400).json({ error: "Missing required fields" });
     }
 
+    console.log("Testing...");
+
     const conversionAmount = parseFloat(amount);
+    console.log(conversionAmount);
+
     if (subscription.balance < conversionAmount) {
       return res.status(400).json({ error: "Insufficient balance" });
     }
@@ -173,13 +185,17 @@ router.post("/request", async (req, res) => {
       targetAmount: convertedAmount,
       targetCurrency: toCurrency,
       fee: fee,
+      phone: phoneNum,
       status: "pending",
       external_reference: externalReference,
       description: "XCoin conversion",
+      username: username,
       userId: user.id,
     });
 
-    res.status(200).json({ transaction, newBalance: subscription.balance });
+    return res
+      .status(200)
+      .json({ transaction, newBalance: subscription.balance });
   } catch (error) {
     console.error("Error during conversion:", error);
     res.status(500).json({ error: "Internal server error" });

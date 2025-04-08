@@ -1,9 +1,7 @@
 import { useState, useEffect } from "react";
 import Sidebar from "@/components/Sidebar";
-import axios from "axios";
-
-// I added this to handle drag n drop of QR code image but later didn't use it.
-// import { useDropzone } from "react";
+import axios, { AxiosError } from "axios";
+import getToken from "@/utils/GetCampayToken";
 
 type Conversion = {
   id: number;
@@ -23,59 +21,92 @@ const rates = {
   },
 };
 
+const KValues = [
+  {
+    id: 1,
+    date: "2025-02-15",
+    fromAmount: 50,
+    fromCurrency: "XCoin",
+    toAmount: 350,
+    toCurrency: "RMB",
+    status: "Completed",
+  },
+  {
+    id: 2,
+    date: "2025-02-12",
+    fromAmount: 75,
+    fromCurrency: "XCoin",
+    toAmount: 41250,
+    toCurrency: "FCFA",
+    status: "Completed",
+  },
+  {
+    id: 3,
+    date: "2025-02-08",
+    fromAmount: 200,
+    fromCurrency: "XCoin",
+    toAmount: 1400,
+    toCurrency: "RMB",
+    status: "Completed",
+  },
+];
+
 function ConvertXcoinPage() {
   // Wallet holds only XCoin, so fromCurrency is fixed.
   const fromCurrency = "xcoin";
   const [amount, setAmount] = useState("");
+  const [username, setUsername] = useState("");
   const [toCurrency, setToCurrency] = useState<"rmb" | "fcfa" | "usd">("rmb");
   const [convertedAmount, setConvertedAmount] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
   const [showConfirmation, setShowConfirmation] = useState(false);
-  const [recentConversions, setRecentConversions] = useState<Conversion[]>([
-    {
-      id: 1,
-      date: "2025-02-15",
-      fromAmount: 50,
-      fromCurrency: "XCoin",
-      toAmount: 350,
-      toCurrency: "RMB",
-      status: "Completed",
-    },
-    {
-      id: 2,
-      date: "2025-02-12",
-      fromAmount: 75,
-      fromCurrency: "XCoin",
-      toAmount: 41250,
-      toCurrency: "FCFA",
-      status: "Completed",
-    },
-    {
-      id: 3,
-      date: "2025-02-08",
-      fromAmount: 200,
-      fromCurrency: "XCoin",
-      toAmount: 1400,
-      toCurrency: "RMB",
-      status: "Completed",
-    },
-  ]);
+  const [recentConversions, setRecentConversions] =
+    useState<Conversion[]>(KValues);
 
-  const [imageUrl, setImageUrl] = useState<string | null>(null);
-  const [isImageUploaded, setIsImageUploaded] = useState(false);
+  // New state for dynamic exchange rates and last update time
+  const [exchangeRates, setExchangeRates] = useState(rates);
+  const [lastUpdate, setLastUpdate] = useState<string | null>(null);
+  const [isRatesLoading, setIsRatesLoading] = useState(false);
 
-  // Calculate conversion whenever input or destination changes
+  useEffect(() => {
+    const fetchExchangeRates = async () => {
+      setIsRatesLoading(true);
+      try {
+        const url = `${import.meta.env.VITE_ROOT_URL}/payments/data/rates`;
+        const response = await axios.get(url, { withCredentials: true });
+        setExchangeRates(response.data.rates);
+        setLastUpdate(
+          new Date(response.data.lastUpdated * 1000).toLocaleString()
+        );
+      } catch (error) {
+        console.error("Failed to fetch exchange rates", error);
+      } finally {
+        setIsRatesLoading(false);
+      }
+    };
+
+    // Fetch exchange rates immediately
+    fetchExchangeRates();
+
+    // Set up interval to fetch rates periodically
+    const intervalId = setInterval(fetchExchangeRates, 100000);
+
+    // Clean up interval on component unmount
+    return () => clearInterval(intervalId);
+  }, []);
+
   useEffect(() => {
     if (amount && toCurrency) {
       const amountNum = parseFloat(amount);
       if (!isNaN(amountNum)) {
-        const convertedValue = amountNum * rates[fromCurrency][toCurrency];
+        const convertedValue =
+          amountNum * exchangeRates[fromCurrency][toCurrency];
         setConvertedAmount(convertedValue);
       }
     } else {
       setConvertedAmount(0);
     }
-  }, [amount, toCurrency, fromCurrency]);
+  }, [amount, toCurrency, fromCurrency, exchangeRates]);
 
   const handleToCurrencyChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     setToCurrency(e.target.value as "rmb" | "fcfa" | "usd");
@@ -91,30 +122,33 @@ function ConvertXcoinPage() {
     e.preventDefault();
     setIsLoading(true);
 
-    const form = e.currentTarget;
-    const destCurrency = (
-      form.elements.namedItem("destCurrency") as HTMLInputElement
-    ).value;
-
-    if (destCurrency == "FCFA") {
+    await getToken();
+    try {
       const url = import.meta.env.VITE_ROOT_URL;
-      try {
-        // API call with conversion details in the request body.
+      const form = e.target as HTMLFormElement;
+      const destCurrency = (
+        form.elements.namedItem("destCurrency") as HTMLSelectElement
+      ).value;
+      console.log(destCurrency);
+
+      if (destCurrency === "rmb") {
         const response = await axios.post(
-          `${url}/transaction/request`,
+          `${url}/transactions/request`,
           {
+            username,
             amount: parseFloat(amount),
             fromCurrency: "XCoin",
-            toCurrency: toCurrency,
-            convertedAmount: convertedAmount,
+            toCurrency: toCurrency.toUpperCase(),
+            convertedAmount,
           },
           { withCredentials: true }
         );
+
         if (import.meta.env.DEV) {
           console.log("API Response:", response.data);
         }
 
-        // Assuming the API returns a status field, you can use it.
+        // Add the new conversion to the history
         const newConversion: Conversion = {
           id: recentConversions.length + 1,
           date: new Date().toISOString().split("T")[0],
@@ -126,17 +160,41 @@ function ConvertXcoinPage() {
         };
         setRecentConversions([newConversion, ...recentConversions]);
         setShowConfirmation(true);
-      } catch (error) {
-        console.error("Conversion failed", error);
-        // Optionally, set an error state here to display an error message.
-      } finally {
-        setIsLoading(false);
+      } else if (destCurrency === "fcfa") {
+        try {
+          const phone = (
+            form.elements.namedItem("phoneNumber") as HTMLInputElement
+          ).value;
+          const response = await axios.post(
+            `${url}/payments/campay/withdraw`,
+            {
+              amount: convertedAmount,
+              to: `237${phone}`,
+              description: `Withdrawal of ${amount}`,
+            },
+            { withCredentials: true }
+          );
+
+          console.log("Withdrawal successful:", response.data);
+          alert("Withdrawal request sent successfully!");
+        } catch (error) {
+          if (error instanceof AxiosError) {
+            console.error("Error:", error.response?.data || error.message);
+            alert(
+              error.response?.data?.error || "Failed to process withdrawal."
+            );
+          }
+        }
       }
+    } catch (error) {
+      console.error("Conversion failed", error);
+    } finally {
+      setIsLoading(false);
     }
   };
 
   const getCurrencyName = (code: string): string => {
-    switch (code) {
+    switch (code.toLowerCase()) {
       case "xcoin":
         return "XCoin";
       case "rmb":
@@ -151,7 +209,7 @@ function ConvertXcoinPage() {
   };
 
   const getCurrencySymbol = (code: string): string => {
-    switch (code) {
+    switch (code.toLowerCase()) {
       case "xcoin":
         return "X";
       case "rmb":
@@ -165,27 +223,11 @@ function ConvertXcoinPage() {
     }
   };
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        setImageUrl(reader.result as string);
-        setIsImageUploaded(true);
-        console.log(e);
-      };
-      reader.readAsDataURL(file);
-    }
-  };
-
   return (
     <div className="flex h-screen bg-gray-50">
       <Sidebar />
-      <main className="flex-1 p-6 f">
-        {/* Header */}
-
-        {/* Conversion Form */}
-        <div className="flex flex-row">
+      <main className="flex-1 p-6 flex max-sm:flex-col">
+        <div className="flex flex-row max-sm:flex-col">
           <div className="max-w-2xl mx-auto">
             <header className="mb-8">
               <h1 className="text-3xl font-bold text-gray-800 text-center">
@@ -198,12 +240,13 @@ function ConvertXcoinPage() {
                   Conversion Successful!
                 </h2>
                 <p className="text-xl mb-4">
-                  {parseFloat(amount).toFixed(2)} XCoin ={" "}
+                  {parseFloat(amount)} XCoin ={" "}
                   <span className="font-semibold">
                     {convertedAmount.toFixed(2)} {getCurrencyName(toCurrency)}
                   </span>
                 </p>
                 <button
+                  type="button"
                   onClick={() => {
                     setShowConfirmation(false);
                     setAmount("");
@@ -234,6 +277,7 @@ function ConvertXcoinPage() {
                       </span>
                       <input
                         type="number"
+                        step="any"
                         placeholder="Enter amount"
                         value={amount}
                         onChange={handleAmountChange}
@@ -251,15 +295,14 @@ function ConvertXcoinPage() {
                   <div className="flex items-center">
                     <select
                       title="destCurrency"
+                      name="destCurrency"
                       value={toCurrency}
                       onChange={handleToCurrencyChange}
-                      className="min-w-20 px-4 py-3 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 "
+                      className="min-w-20 px-4 py-3 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
                     >
                       <option value="rmb">RMB</option>
                       <option value="fcfa">FCFA</option>
-                      <option value="usd" disabled>
-                        USD
-                      </option>
+                      <option value="usd">USD</option>
                     </select>
                     <div className="relative flex-1 ml-4">
                       <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500">
@@ -271,7 +314,7 @@ function ConvertXcoinPage() {
                         value={
                           convertedAmount ? convertedAmount.toFixed(2) : ""
                         }
-                        className="w-full pl-8 pr-4 py-3 bg-gray-50 border border-gray-300 rounded-md"
+                        className="w-full pl-12 pr-4 py-3 bg-gray-50 border border-gray-300 rounded-md"
                       />
                     </div>
                   </div>
@@ -301,50 +344,47 @@ function ConvertXcoinPage() {
                   </div>
                 )}
 
-                {/* Show if Destination currency is RMB */}
                 {toCurrency === "rmb" && (
-                  <div>
+                  <div className="flex flex-col w-full mx-auto mt-4">
                     <label
-                      htmlFor="qrCode"
-                      className="block text-sm font-medium text-gray-700 mb-2"
+                      htmlFor="username"
+                      className="mb-2 text-lg font-semibold"
                     >
-                      Upload your QR Code
+                      Enter your Alipay/WeChat username
                     </label>
-                    <div
-                      className={`border-2 ${
-                        isImageUploaded
-                          ? "max-w-sm max-h-40 overflow-y-auto border-blue-500"
-                          : "border-dashed border-gray-300"
-                      } rounded-lg p-6 text-center shadow-inset-blue`}
-                    >
-                      {imageUrl ? (
-                        <img src={imageUrl} alt="QR Code" className="mx-auto" />
-                      ) : (
-                        <div></div>
-                      )}
-                      <input
-                        type="file"
-                        accept="image/*"
-                        onChange={handleFileChange}
-                        className="mt-4"
-                      />
-                      <p className="text-left mt-4 text-sm text-gray-600">
-                        Upload your Alipay or WeChat receiving QR Code
-                      </p>
-                    </div>
+                    <input
+                      type="text"
+                      id="username"
+                      name="username"
+                      placeholder="John Doe"
+                      value={username}
+                      className="p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      onChange={(e) => {
+                        setUsername(e.target.value);
+                      }}
+                      required
+                    />
                   </div>
                 )}
 
                 {/* Rate Information */}
                 <div className="bg-blue-50 p-4 rounded-lg text-sm text-blue-800">
-                  <p>
-                    <span className="font-medium">Current Rate:</span> 1 XCoin ={" "}
-                    {rates.xcoin[toCurrency].toFixed(2)}{" "}
-                    {getCurrencyName(toCurrency)}
-                  </p>
-                  <p className="mt-1 text-xs">
-                    *Rates updated: Today at 08:30 UTC
-                  </p>
+                  {isRatesLoading ? (
+                    <p className="text-xs">Loading exchange rates...</p>
+                  ) : (
+                    <>
+                      <p>
+                        <span className="font-medium">Current Rate:</span> 1
+                        XCoin = {exchangeRates.xcoin[toCurrency]}{" "}
+                        {getCurrencyName(toCurrency)}
+                      </p>
+                      {lastUpdate && (
+                        <p className="mt-1 text-xs">
+                          *Rates updated: {lastUpdate}
+                        </p>
+                      )}
+                    </>
+                  )}
                 </div>
                 <div>
                   <button
@@ -415,7 +455,7 @@ function ConvertXcoinPage() {
             {/* Help Box */}
             <div>
               <div className="bg-gradient-to-r from-blue-500 to-blue-600 p-6 rounded-xl shadow-lg text-white">
-                <h3 className="text-lg font-medium mb-3"> Need Help?</h3>
+                <h3 className="text-lg font-medium mb-3">Need Help?</h3>
                 <p className="mb-4">
                   Our support team is available 24/7 to assist you with your
                   XCoin purchases.

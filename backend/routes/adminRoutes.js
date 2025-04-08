@@ -67,13 +67,12 @@ router.get("/auth/verify", async (req, res) => {
 router.get("/transactions", isAdmin, async (_, res) => {
   try {
     const transactions = await Transaction.findAll({
-      where: { type: "convert" },
+      where: { type: "request" },
       order: [["date", "DESC"]],
     });
-    console.log("Transactions", transactions);
     return res.json(transactions);
   } catch (err) {
-    console.error(err.message);
+    console.log(err.message);
     res.status(500).send("Server Error");
   }
 });
