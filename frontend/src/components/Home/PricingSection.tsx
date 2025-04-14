@@ -7,7 +7,7 @@ const PricingSection = () => {
       name: "Standard",
       description: "Perfect for occasional transfers",
       fee: "8.5%",
-      limit: "Up to XAF100,000/day",
+      limit: "Up to XAF50,000/day",
       features: [
         "Real-time exchange rates",
         "Mobile money payment option",
@@ -105,7 +105,7 @@ const PricingSection = () => {
                     <span className="text-4xl font-bold text-gray-900">
                       {tier.fee}
                     </span>
-                    <span className="text-gray-600"> per transfer</span>
+                    <span className="text-gray-600"><span className="font-bold text-base">+2%</span> per transfer</span>
                   </div>
                   <p className="text-sm text-gray-600">{tier.limit}</p>
                 </CardHeader>

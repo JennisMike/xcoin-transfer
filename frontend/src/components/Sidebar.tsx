@@ -73,6 +73,7 @@ function Sidebar() {
         </ul>
 
         {/* Logout Button */}
+        <img src="/Contact card alipay.jpg" alt="Contact Card Alipay" className="w-32 h-auto mx-auto my-4 rounded" />
         <button className="flex items-center gap-3 px-4 py-2 rounded-lg bg-red-600 hover:bg-red-700 transition-colors duration-200">
           <LogOut size={20} />
           Logout
