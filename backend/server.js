@@ -12,7 +12,7 @@ const SQLiteStore = require("connect-sqlite3")(session);
 
 const app = express();
 
-app.use(express.json()); // Middleware to parse JSON request bodies.
+app.use(express.json());
 
 // Connect to the database.
 connectDB();
@@ -21,13 +21,12 @@ const corsOptions = {
   origin: [
     "http://localhost:5173",
     "http://localhost:5174",
-    "http://18.212.27.82:3000",
+    process.env.FRONTEND_URL,
   ], // Allowed domains
   methods: ["GET", "POST"], // Allowed methods (optional)
   credentials: true, // Allow credentials (optional)
   optionsSuccessStatus: 200, // For legacy browser support (optional)
 };
-
 
 // Sync models with the database.
 sequelize.sync({ alter: false }).then(() => {

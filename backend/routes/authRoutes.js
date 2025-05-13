@@ -10,10 +10,12 @@ const LoginAttempt = require("../models/loginAttempts");
 const { encryptResponse } = require("../services/crypto");
 const getClientIpAddress = require("../services/getClientIPAddress");
 
+const jwt = require("jsonwebtoken");
+const { sendVerificationLink } = require("../services/utils");
+
 router.post(
   "/register",
   [
-    // Validate fields with express-validator
     body("fullName").notEmpty().withMessage("Full name is required"),
     body("email").isEmail().withMessage("Email must be valid").normalizeEmail(),
     body("password").notEmpty().withMessage("Password is required"),
@@ -23,10 +25,8 @@ router.post(
     body("country").notEmpty().withMessage("Country is required"),
   ],
   async (req, res) => {
-    // Check for validation errors
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
-      // Format errors as { field: "error message" }
       const formattedErrors = {};
       errors.array().forEach((err) => {
         formattedErrors[err.param] = err.msg;
@@ -35,18 +35,9 @@ router.post(
     }
 
     try {
-      const {
-        fullName,
-        email,
-        password,
-        dob,
-        gender,
-        occupation,
-        institution,
-        country,
-      } = req.body;
+      const { fullName, email, password, dob, gender, occupation, country } =
+        req.body;
 
-      // Check if user already exists
       const existingUser = await User.findOne({ where: { email } });
       if (existingUser) {
         return res
@@ -54,32 +45,31 @@ router.post(
           .json({ errors: { email: "Email already in use" } });
       }
 
-      // Hash the password before saving
       const hashedPassword = await bcrypt.hash(password, 10);
 
-      const user = await User.create({
-        fullName,
-        email,
-        password: hashedPassword,
-        dob,
-        gender,
-        occupation,
-        institution,
-        country,
-      });
+      // Generate a JWT verification token
+      const verificationToken = jwt.sign(
+        {
+          fullName,
+          email,
+          password: hashedPassword,
+          dob,
+          gender,
+          occupation,
+          country,
+        },
+        process.env.JWT_SECRET,
+        {
+          expiresIn: "24h",
+        }
+      );
 
-      await Subscription.create({ userId: user.id });
+      // Send verification email
+      sendVerificationLink(email, verificationToken);
 
-      // Set user info in session (excluding sensitive data)
-      req.session.user = {
-        id: user.id,
-        email: user.email,
-        fullName: user.fullName,
-      };
-
-      res.status(201).json({
-        message: "User registered and logged in successfully.",
-        user: req.session.user,
+      return res.status(201).json({
+        message:
+          "User registered successfully. Please check your email to verify your account.",
       });
     } catch (error) {
       res
@@ -89,29 +79,68 @@ router.post(
   }
 );
 
+router.get("/verify-email", async (req, res) => {
+  const { token } = req.query;
+
+  try {
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    const { email, fullName, password, dob, gender, occupation, country } =
+      decoded;
+
+    const existingUser = await User.findOne({ where: { email } });
+    if (existingUser) {
+      return res.status(201).json({ error: "User already verified" });
+    }
+
+    const user = await User.create({
+      fullName,
+      email,
+      password,
+      dob,
+      gender,
+      occupation,
+      country,
+      isVerified: true,
+    });
+
+    await Subscription.create({ userId: user.id });
+
+    req.session.user = {
+      id: user.id,
+      email: user.email,
+      fullName: user.fullName,
+    };
+
+    res.status(200).json({ message: "Email verified successfully!" });
+  } catch (error) {
+    res.status(400).json({ error: "Invalid or expired token" });
+  }
+});
+
 router.post("/login", async (req, res) => {
   try {
     const { email, password } = req.body;
     const ipAddress = getClientIpAddress(req);
+
     if (!email || !password) {
       return res.status(400).json({ error: "Email and password are required" });
     }
 
-    // Find user by email
     const user = await User.findOne({ where: { email } });
-    if (!user) {
-      return res.status(400).json({ error: "Invalid credentials" });
+    if (!user || !user.isVerified) {
+      return res
+        .status(400)
+        .json({ error: "Invalid credentials or email not verified" });
     }
 
-    // Compare provided password with stored hashed password
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) {
       return res.status(400).json({ error: "Invalid credentials" });
     }
+    console.log("Login attempt", { email, ipAddress, status: "success" });
 
     await LoginAttempt.create({ email, ipAddress, status: "success" });
 
-    // Create a session (store minimal user info)
     req.session.user = {
       id: user.id,
       email: user.email,

@@ -7,7 +7,6 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Link, useNavigate } from "react-router-dom";
 import { LoginFormInputs } from "@/utils/types";
 import axios, { AxiosError } from "axios";
-import getUser from "@/utils/GetUser";
 
 // Validation schema using Yup
 const schema = yup.object().shape({
@@ -39,23 +38,27 @@ const LoginPage = () => {
 
   const onSubmit = async (data: LoginFormInputs) => {
     try {
-      const response = await axios.post<{ message: string }>(url, data, {
+      await axios.post<{ message: string }>(url, data, {
         withCredentials: true,
       });
-      console.log("Logged in successfully:", response.data);
-      await getUser();
+      const storedUser = JSON.parse(sessionStorage.getItem("user") || "null");
+      if (storedUser) {
+        sessionStorage.setItem(
+          "user",
+          JSON.stringify({ ...storedUser, data: data.email })
+        );
+      }
       setError(null);
       navigate("/dashboard");
     } catch (error) {
       const axiosError = error as AxiosError;
       if (axiosError.response) {
-        console.error("Login failed:", axiosError.response.data);
-        // Ensure the error message is a string before setting it
-        const errorMessage =
-          typeof axiosError.response.data === "string"
-            ? axiosError.response.data
-            : "An unknown error occurred.";
-        setError(errorMessage);
+        const errorMessage = axiosError.response.data as { error: string };
+        setError(
+          typeof errorMessage.error === "string"
+            ? errorMessage.error
+            : "An unexpected error occurred"
+        );
       } else {
         console.error("An error occurred:", axiosError.message);
         setError(axiosError.message);

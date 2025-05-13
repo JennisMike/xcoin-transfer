@@ -17,6 +17,8 @@ import AdminLogin from "./pages/Admin/AdminLogin";
 import AdminDashboard from "./pages/Admin/AdminDashboard";
 import TransactionDetail from "./pages/Admin/TransactionDetail";
 import DashboardTest from "./pages/Admin/DashboardTest";
+import CheckEmailPage from "./pages/CheckEmail";
+import VerifyEmail from "./pages/VerifyEmail";
 
 const AppRoutes: React.FC = () => {
   return (
@@ -24,6 +26,8 @@ const AppRoutes: React.FC = () => {
       <Route path="/" element={<LandingPage />} />
       <Route path="/login" element={<LoginPage />} />
       <Route path="/register" element={<RegisterPage />} />
+      <Route path="/check-email" element={<CheckEmailPage />} />
+      <Route path="/verify-email" element={<VerifyEmail />} />
       <Route
         path="/dashboard"
         element={

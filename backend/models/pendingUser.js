@@ -2,7 +2,7 @@ const { DataTypes } = require("sequelize");
 const { sequelize } = require("../services/db");
 const Card = require("./card");
 
-const User = sequelize.define(
+const PendingUser = sequelize.define(
   "user",
   {
     id: {
@@ -117,4 +117,4 @@ const User = sequelize.define(
 User.belongsTo(Card, { foreignKey: "cardId" });
 Card.hasMany(User, { foreignKey: "cardId" });
 
-module.exports = User;
+module.exports = PendingUser;

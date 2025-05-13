@@ -11,7 +11,7 @@ const ContactSection = () => {
     handleSubmit,
     formState: { errors, isSubmitting },
   } = useForm<ContactFormData>();
-  const number = "+237676131512";
+  const number = "+237672696261";
 
   const onSubmit = (data: ContactFormData) => {
     console.log("Form submitted:", data);
