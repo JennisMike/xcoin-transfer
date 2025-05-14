@@ -6,7 +6,7 @@ const PricingSection = () => {
     {
       name: "Standard",
       description: "Perfect for occasional transfers",
-      fee: "8.5%",
+      fee: "9.9%",
       limit: "Up to XAF50,000/day",
       features: [
         "Real-time exchange rates",
@@ -19,7 +19,7 @@ const PricingSection = () => {
     {
       name: "Premium",
       description: "Ideal for regular transfers",
-      fee: "7.5%",
+      fee: "8.5%",
       limit: "Up to XAF250,000/day",
       featured: true,
       features: [
@@ -33,7 +33,7 @@ const PricingSection = () => {
     {
       name: "Business",
       description: "For high-volume transfers",
-      fee: "5.2%",
+      fee: "6.5%",
       limit: "Custom limits",
       features: [
         "All Premium features",
