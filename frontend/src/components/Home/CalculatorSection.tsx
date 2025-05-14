@@ -4,7 +4,7 @@ import { ExhangeRateType } from "../../utils/types";
 function CalculatorSection() {
   const [amount, setAmount] = useState("");
   const [currency, setCurrency] = useState("RMB");
-  const exchangeRates: ExhangeRateType = { RMB: 7.2, XAF: 600 };
+  const exchangeRates: ExhangeRateType = { RMB: 9.9, XAF: 600 };
 
   const handleAmountChange = (e: {
     target: { value: SetStateAction<string> };
