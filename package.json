@@ -1,7 +1,6 @@
 {
   "dependencies": {
     "@headlessui/react": "^2.2.1",
-    "docker": "^1.0.0",
-    "memorystore": "^1.6.7"
+    "docker": "^1.0.0"
   }
 }

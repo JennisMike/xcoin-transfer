@@ -8,9 +8,7 @@ const adminRoutes = require("./routes/adminRoutes");
 require("dotenv").config();
 const cors = require("cors");
 const session = require("express-session");
-const RedisStore = require("connect-redis").default;
-const Redis = require("ioredis");
-const MemoryStore = require("memorystore")(session);
+const SQLiteStore = require("connect-sqlite3")(session);
 
 const app = express();
 
@@ -19,56 +17,15 @@ app.use(express.json());
 // Connect to the database.
 connectDB();
 
-// Create Redis client with retry strategy
-const createRedisClient = () => {
-  const redisClient = new Redis({
-    host: process.env.REDIS_HOST || "18.212.27.82",
-    port: Number(process.env.REDIS_PORT) || 6379,
-    password: process.env.REDIS_PASSWORD || "mjlsbkCh2z8Ft63",
-    retryStrategy: function(times) {
-      const delay = Math.min(times * 50, 2000);
-      return delay;
-    },
-    maxRetriesPerRequest: 3,
-    enableReadyCheck: true,
-    connectTimeout: 10000,
-  });
-
-  redisClient.on('error', (err) => {
-    console.error('Redis Client Error:', err);
-  });
-
-  redisClient.on('connect', () => {
-    console.log('Successfully connected to Redis');
-  });
-
-  return redisClient;
-};
-
-let redisClient;
-let sessionStore;
-
-try {
-  redisClient = createRedisClient();
-  sessionStore = new RedisStore({ client: redisClient });
-  console.log("Using Redis store for sessions");
-} catch (error) {
-  console.error("Failed to connect to Redis, falling back to memory store:", error);
-  sessionStore = new MemoryStore({
-    checkPeriod: 86400000 // prune expired entries every 24h
-  });
-}
-
 const corsOptions = {
   origin: [
     "http://localhost:5173",
     "http://localhost:5174",
-    "https://xcoin-transfer.vercel.app",
     process.env.FRONTEND_URL,
-  ],
-  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-  credentials: true,
-  optionsSuccessStatus: 200,
+  ], // Allowed domains
+  methods: ["GET", "POST"], // Allowed methods (optional)
+  credentials: true, // Allow credentials (optional)
+  optionsSuccessStatus: 200, // For legacy browser support (optional)
 };
 
 // Sync models with the database.
@@ -78,23 +35,22 @@ sequelize.sync({ alter: false }).then(() => {
 
 app.use(cors(corsOptions));
 
-// Set up session middleware with fallback
+// Set up session middleware
 app.use(
   session({
     name: "xc_session",
-    store: sessionStore,
+    store: new SQLiteStore({ db: "services/database.sqlite", dir: "./" }),
     secret: process.env.SESSION_SECRET || "somesecretkey",
     resave: false,
     saveUninitialized: false,
     cookie: {
       secure: process.env.NODE_ENV === "production",
-      sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
       maxAge: 1000 * 60 * 60 * 4, // 4 hours
     },
   })
 );
 
-// Use routes.
+// Use  routes.
 app.use("/api/auth", userRoutes);
 app.use("/api/transactions", transactionRoutes);
 app.use("/api/subscriptions", subscriptionRoutes);
