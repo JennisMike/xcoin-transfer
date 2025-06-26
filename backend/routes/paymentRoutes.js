@@ -1,7 +1,6 @@
 const express = require("express");
 const router = express.Router();
 const axios = require("axios");
-const Redis = require("ioredis");
 const { generatePaymentReference } = require("../services/utils");
 const Transaction = require("../models/transaction");
 const Subscription = require("../models/subscription");
@@ -11,11 +10,12 @@ require("dotenv").config();
 
 const EXCHANGE_API = "https://api.exchangerate-api.com/v4/latest/USD";
 
+const Redis = require("ioredis");
 // Function to create Redis client
 const createRedisClient = () => {
-  const host = process.env.REDIS_HOST || "18.212.27.82";
-  const port = Number(process.env.REDIS_PORT) || 6379;
-  const password = process.env.REDIS_PASSWORD || "mjlsbkCh2z8Ft63";
+  const host = process.env.REDIS_HOST;
+  const port = Number(process.env.REDIS_PORT);
+  const password = process.env.REDIS_PASSWORD;
 
   return new Redis({
     host,
